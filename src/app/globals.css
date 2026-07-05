@@ -157,8 +157,11 @@ main::before {
   position: fixed;
   inset: 0;
   z-index: 50;
-  display: grid;
-  place-items: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(18px, 4vh, 34px);
   padding: 32px;
   overflow: hidden;
   text-align: center;
@@ -196,6 +199,8 @@ main::before {
 
 .opening-kicker,
 .section-eyebrow {
+  position: relative;
+  z-index: 1;
   color: var(--gold-soft);
   font-size: 0.78rem;
   font-weight: 700;
@@ -230,11 +235,9 @@ main::before {
 }
 
 .opening-button {
-  position: absolute;
-  bottom: 64px;
-  left: 50%;
+  position: relative;
+  z-index: 1;
   width: min(320px, calc(100% - 44px));
-  transform: translateX(-50%);
 }
 
 .primary-button,
