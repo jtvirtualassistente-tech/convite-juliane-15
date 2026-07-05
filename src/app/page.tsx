@@ -510,7 +510,7 @@ export default function Home() {
     <main>
       <Image
         className="site-background"
-        src="/images/starry-night-hero.png"
+        src="/images/noite-estrelada-convite.png"
         alt=""
         fill
         priority
@@ -569,6 +569,21 @@ export default function Home() {
           </Reveal>
           <Reveal delay={0.15}>
             <Countdown />
+          </Reveal>
+        </section>
+
+        <section className="invitation-art-section" aria-label="Imagem do tema">
+          <Reveal className="invitation-art-card">
+            <Image
+              alt="Ceu noturno estrelado com constelacoes e luz dourada no horizonte"
+              fill
+              sizes="(max-width: 720px) 92vw, 920px"
+              src="/images/noite-estrelada-convite.png"
+            />
+            <div>
+              <span className="section-eyebrow">Uma Noite Estrelada</span>
+              <h2>Um ceu preparado para sonhar.</h2>
+            </div>
           </Reveal>
         </section>
 

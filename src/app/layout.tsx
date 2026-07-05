@@ -28,7 +28,7 @@ export const metadata: Metadata = {
     description:
       "Sob a luz das estrelas, um sonho esta prestes a se tornar realidade.",
     type: "website",
-    images: ["/images/starry-night-hero.png"],
+    images: ["/images/noite-estrelada-convite.png"],
   },
   robots: {
     index: true,
