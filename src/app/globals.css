@@ -477,8 +477,7 @@ section {
 
 .countdown-section,
 .story-section,
-.gifts-section,
-.admin-preview {
+.gifts-section {
   background: linear-gradient(180deg, rgba(3, 7, 22, 0), rgba(3, 7, 22, 0.5));
 }
 
@@ -943,10 +942,6 @@ section {
 
 .bottom-nav svg {
   color: var(--gold-soft);
-}
-
-.admin-preview {
-  padding-bottom: 124px;
 }
 
 .admin-shell {
@@ -1704,10 +1699,6 @@ section {
 
   .bottom-nav {
     display: none;
-  }
-
-  .admin-preview {
-    padding-bottom: 124px;
   }
 
   .admin-shell {

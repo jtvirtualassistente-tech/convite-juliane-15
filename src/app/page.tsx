@@ -6,22 +6,17 @@ import {
   ChevronLeft,
   ChevronRight,
   Clock,
-  Copy,
   Gift,
   Heart,
   Image as ImageIcon,
-  LayoutDashboard,
   MapPin,
   Menu,
   Moon,
   Music2,
   Plus,
-  Search,
-  ShieldCheck,
   Sparkles,
   Star,
   Trash2,
-  Users,
   X,
 } from "lucide-react";
 import Image from "next/image";
@@ -67,14 +62,6 @@ const timeline = [
   "Momentos inesqueciveis",
   "Amigos e familia",
   "Chegaram os 15 anos",
-];
-
-const adminMenuItems = [
-  { label: "Dashboard", icon: LayoutDashboard },
-  { label: "Convidados", icon: Users },
-  { label: "Galeria", icon: ImageIcon },
-  { label: "Presentes", icon: Gift },
-  { label: "Seguranca", icon: ShieldCheck },
 ];
 
 function scrollToId(id: string) {
@@ -205,7 +192,6 @@ function Header({
     ["Convite", "convite"],
     ["Contagem", "contagem"],
     ["Universo", "universo"],
-    ["Admin", "admin"],
   ];
 
   if (!opened) return null;
@@ -489,86 +475,6 @@ function SuccessOverlay({
   );
 }
 
-function AdminPreview() {
-  const rows = [
-    ["Ana Clara", "Confirmado", "2", "04/07/2026"],
-    ["Familia Martins", "Pendente", "4", "-"],
-    ["Lucas Ribeiro", "Recusado", "1", "02/07/2026"],
-  ];
-
-  return (
-    <section className="admin-preview" id="admin">
-      <Reveal className="section-heading admin-heading">
-        <span className="section-eyebrow">Painel administrativo</span>
-        <h2>Controle claro para os organizadores.</h2>
-        <p>
-          Uma area protegida por autenticacao, preparada para convidados,
-          conteudo, galeria, presentes, configuracoes e relatorios.
-        </p>
-      </Reveal>
-      <Reveal className="admin-shell">
-        <aside className="admin-sidebar">
-          <div className="admin-logo">Juliane 15</div>
-          {adminMenuItems.map(({ label, icon: Icon }) => (
-            <button className={label === "Dashboard" ? "active" : ""} key={label}>
-              <Icon size={17} />
-              {label}
-            </button>
-          ))}
-        </aside>
-        <div className="admin-main">
-          <header className="admin-topbar">
-            <div>
-              <span>Dashboard</span>
-              <strong>Resumo da festa</strong>
-            </div>
-            <div className="admin-search">
-              <Search size={16} />
-              <span>Buscar convidado</span>
-            </div>
-          </header>
-          <div className="admin-metrics">
-            {[
-              ["Convites", "128"],
-              ["Confirmados", "86"],
-              ["Pendentes", "31"],
-              ["Pessoas estimadas", "214"],
-            ].map(([label, value]) => (
-              <article key={label}>
-                <span>{label}</span>
-                <strong>{value}</strong>
-              </article>
-            ))}
-          </div>
-          <div className="admin-content-grid">
-            <article className="admin-panel">
-              <h3>Confirmacoes recentes</h3>
-              <div className="admin-table">
-                {rows.map(([name, status, total, date]) => (
-                  <div className="admin-row" key={name}>
-                    <span>{name}</span>
-                    <em className={status.toLowerCase()}>{status}</em>
-                    <span>{total}</span>
-                    <span>{date}</span>
-                  </div>
-                ))}
-              </div>
-            </article>
-            <article className="admin-panel invite-card">
-              <h3>Link unico</h3>
-              <p>/convite</p>
-              <button>
-                <Copy size={16} />
-                Copiar convite
-              </button>
-            </article>
-          </div>
-        </div>
-      </Reveal>
-    </section>
-  );
-}
-
 export default function Home() {
   const [opened, setOpened] = useState(false);
   const [rsvpOpen, setRsvpOpen] = useState(false);
@@ -778,8 +684,6 @@ export default function Home() {
             <Countdown compact />
           </Reveal>
         </section>
-
-        <AdminPreview />
       </div>
 
       <nav className="bottom-nav" aria-label="Navegacao da area privada">
