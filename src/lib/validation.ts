@@ -30,7 +30,7 @@ export const openRsvpSchema = z.object({
 export const guestSchema = z.object({
   mainGuestName: z.string().trim().min(2, "Informe o nome."),
   phone: phoneSchema.or(z.literal("")),
-  maxCompanions: z.coerce.number().int().min(0).max(20),
+  maxCompanions: z.coerce.number().int().min(0).max(999),
   notes: z.string().max(600).optional(),
   origin: z.string().max(120).optional(),
   active: z.boolean().default(true),

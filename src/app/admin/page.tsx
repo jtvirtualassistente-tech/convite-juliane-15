@@ -34,6 +34,7 @@ import {
 } from "@/lib/guest-service";
 import { listOpenRsvps } from "@/lib/open-rsvp-service";
 import type { Guest, OpenRsvpRecord } from "@/lib/types";
+import { ZodError } from "zod";
 
 type AdminSection = "dashboard" | "guests" | "gifts" | "settings";
 
@@ -147,11 +148,7 @@ export default function AdminPage() {
       setMessage("Pessoa adicionada a lista.");
       await loadAdminData();
     } catch (reason) {
-      setError(
-        reason instanceof Error
-          ? reason.message
-          : "Nao foi possivel cadastrar o convidado.",
-      );
+      setError(getFriendlyError(reason, "Nao foi possivel cadastrar a pessoa."));
     }
   }
 
@@ -389,6 +386,14 @@ Esperamos voce sob as estrelas.`;
       </section>
     </main>
   );
+}
+
+function getFriendlyError(reason: unknown, fallback: string) {
+  if (reason instanceof ZodError) {
+    return reason.issues.map((issue) => issue.message).join(" ");
+  }
+
+  return reason instanceof Error ? reason.message : fallback;
 }
 
 function RsvpPanel({ rsvps }: { rsvps: OpenRsvpRecord[] }) {
