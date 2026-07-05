@@ -74,7 +74,8 @@ service cloud.firestore {
         && request.resource.data.totalPeople is int
         && request.resource.data.totalPeople <= 300;
 
-      allow read, update, delete: if isAdmin();
+      allow read: if resource.data.eventId == "juliane-15";
+      allow update, delete: if isAdmin();
     }
 
     match /content/{document=**} {
