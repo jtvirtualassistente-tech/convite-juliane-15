@@ -161,32 +161,24 @@ export function listLocalGuests(): Guest[] {
   const saved = window.localStorage.getItem("admin:local-guests");
   if (saved) {
     try {
-      return JSON.parse(saved) as Guest[];
+      const guests = JSON.parse(saved) as Guest[];
+      const cleanedGuests = guests.filter(
+        (guest) =>
+          !["Convidado Especial", "Familia Martins", "Lucas Ribeiro"].includes(
+            guest.mainGuestName,
+          ),
+      );
+      if (cleanedGuests.length !== guests.length) {
+        window.localStorage.setItem("admin:local-guests", JSON.stringify(cleanedGuests));
+      }
+      return cleanedGuests;
     } catch {
       window.localStorage.removeItem("admin:local-guests");
     }
   }
 
-  const demoGuests = [
-    { ...getDemoGuest("AB12CD"), status: "confirmed", companionNames: ["Maria"] },
-    {
-      ...getDemoGuest("K8L2QZ"),
-      id: "demo-2",
-      mainGuestName: "Familia Martins",
-      status: "pending",
-      maxCompanions: 4,
-    },
-    {
-      ...getDemoGuest("R9T5AA"),
-      id: "demo-3",
-      mainGuestName: "Lucas Ribeiro",
-      status: "declined",
-      maxCompanions: 0,
-    },
-  ] satisfies Guest[];
-
-  window.localStorage.setItem("admin:local-guests", JSON.stringify(demoGuests));
-  return demoGuests;
+  window.localStorage.setItem("admin:local-guests", JSON.stringify([]));
+  return [];
 }
 
 export function createLocalGuest(input: GuestInput) {
