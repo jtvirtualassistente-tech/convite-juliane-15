@@ -299,18 +299,14 @@ function RsvpModal({
         name,
         phone,
         willAttend: answer === "yes",
-        people,
+        people: answer === "yes" ? people : [],
         reviewed: true,
       });
 
       if (answer === "yes") onSuccess();
       else onClose();
     } catch (reason) {
-      setError(
-        reason instanceof Error
-          ? reason.message
-          : "Nao foi possivel concluir sua confirmacao.",
-      );
+      setError(getFriendlyRsvpError(reason));
     } finally {
       setSent(false);
     }
@@ -436,6 +432,28 @@ function RsvpModal({
       ) : null}
     </AnimatePresence>
   );
+}
+
+function getFriendlyRsvpError(reason: unknown) {
+  if (
+    typeof reason === "object" &&
+    reason &&
+    "issues" in reason &&
+    Array.isArray(reason.issues)
+  ) {
+    return reason.issues
+      .map((issue: { path?: Array<string | number>; message?: string }) => {
+        if (issue.path?.includes("people")) {
+          return "Informe pelo menos um nome na lista de pessoas ou escolha que nao podera comparecer.";
+        }
+        return issue.message ?? "Verifique os dados informados.";
+      })
+      .join(" ");
+  }
+
+  return reason instanceof Error
+    ? reason.message
+    : "Nao foi possivel concluir sua confirmacao.";
 }
 
 function SuccessOverlay({
