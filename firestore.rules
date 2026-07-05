@@ -1,0 +1,100 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return signedIn()
+        && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    function isActiveGuestRead() {
+      return resource.data.active == true
+        && resource.data.eventId == "juliane-15";
+    }
+
+    match /admins/{uid} {
+      allow read: if isAdmin() && request.auth.uid == uid;
+      allow write: if false;
+    }
+
+    match /events/{eventId} {
+      allow read: if eventId == "juliane-15";
+      allow write: if isAdmin();
+    }
+
+    match /guests/{guestId} {
+      allow get, list: if isAdmin() || isActiveGuestRead();
+      allow create, delete: if isAdmin();
+
+      allow update: if isAdmin()
+        || (
+          isActiveGuestRead()
+          && request.time < timestamp.date(2026, 8, 21)
+          && request.resource.data.diff(resource.data).changedKeys().hasOnly([
+            "mainGuestName",
+            "phone",
+            "companionNames",
+            "status",
+            "confirmedAt",
+            "updatedAt"
+          ])
+          && request.resource.data.status in ["confirmed", "declined"]
+          && request.resource.data.companionNames.size() <= resource.data.maxCompanions
+        );
+
+      match /companions/{companionId} {
+        allow read, write: if isAdmin();
+      }
+    }
+
+    match /rsvps/{rsvpId} {
+      allow create: if request.resource.data.eventId == "juliane-15"
+        && request.resource.data.keys().hasOnly([
+          "eventId",
+          "name",
+          "phone",
+          "willAttend",
+          "people",
+          "status",
+          "totalPeople",
+          "createdAt"
+        ])
+        && request.resource.data.name is string
+        && request.resource.data.name.size() >= 2
+        && request.resource.data.phone is string
+        && request.resource.data.phone.size() >= 10
+        && request.resource.data.willAttend is bool
+        && request.resource.data.people is list
+        && request.resource.data.people.size() <= 300
+        && request.resource.data.status in ["confirmed", "declined"]
+        && request.resource.data.totalPeople is int
+        && request.resource.data.totalPeople <= 300;
+
+      allow read, update, delete: if isAdmin();
+    }
+
+    match /content/{document=**} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /giftCategories/{document=**} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /gifts/{document=**} {
+      allow read: if resource.data.active == true || isAdmin();
+      allow write: if isAdmin();
+    }
+
+    match /gallery/{document=**} {
+      allow read: if resource.data.active == true || isAdmin();
+      allow write: if isAdmin();
+    }
+  }
+}

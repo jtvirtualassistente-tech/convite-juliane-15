@@ -1,0 +1,15 @@
+Ola! Voce esta convidado(a) para celebrar os 15 anos da Juliane em uma noite muito especial.
+
+Data: 04 de setembro de 2026
+Horario: 20h00
+Local: Cerimonial Palace
+Endereco: Rodovia Cachoeiro x Alegre, Km 3,8, Cachoeiro de Itapemirim - ES
+
+Confirme sua presenca pelo convite digital:
+http://127.0.0.1:3000/convite
+
+Esperamos voce sob as estrelas.
+
+IMPORTANTE:
+Antes de enviar para convidados reais, publique o projeto na internet e troque o link local
+http://127.0.0.1:3000 pelo dominio publico do site.
