@@ -593,6 +593,12 @@ export default function Home() {
         sizes="100vw"
       />
       <div className="stars-layer" />
+      <div className="shooting-stars-layer" aria-hidden="true">
+        <span />
+        <span />
+        <span />
+        <span />
+      </div>
       <Header opened={opened} onRsvp={() => setRsvpOpen(true)} />
       <AnimatePresence>
         {!opened ? <OpeningScreen onOpen={() => setOpened(true)} /> : null}

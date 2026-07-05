@@ -87,6 +87,72 @@ main::before {
   animation: starDrift 38s linear infinite;
 }
 
+.shooting-stars-layer {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.shooting-stars-layer span {
+  position: absolute;
+  top: var(--star-top);
+  left: var(--star-left);
+  width: var(--star-width);
+  height: 2px;
+  border-radius: 999px;
+  opacity: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.96),
+    rgba(240, 220, 160, 0.9)
+  );
+  box-shadow:
+    0 0 12px rgba(255, 255, 255, 0.72),
+    0 0 28px rgba(217, 189, 116, 0.34);
+  transform: rotate(var(--star-rotate));
+  animation: ambientShootingStar var(--star-duration) ease-in-out infinite;
+  animation-delay: var(--star-delay);
+}
+
+.shooting-stars-layer span:nth-child(1) {
+  --star-top: 12%;
+  --star-left: 82%;
+  --star-width: 180px;
+  --star-rotate: -31deg;
+  --star-duration: 8.5s;
+  --star-delay: 1.4s;
+}
+
+.shooting-stars-layer span:nth-child(2) {
+  --star-top: 28%;
+  --star-left: 104%;
+  --star-width: 132px;
+  --star-rotate: -24deg;
+  --star-duration: 11s;
+  --star-delay: 5.8s;
+}
+
+.shooting-stars-layer span:nth-child(3) {
+  --star-top: 52%;
+  --star-left: 78%;
+  --star-width: 120px;
+  --star-rotate: -18deg;
+  --star-duration: 13s;
+  --star-delay: 9.2s;
+}
+
+.shooting-stars-layer span:nth-child(4) {
+  --star-top: 20%;
+  --star-left: 58%;
+  --star-width: 96px;
+  --star-rotate: -36deg;
+  --star-duration: 15s;
+  --star-delay: 13.4s;
+}
+
 .opening-screen {
   position: fixed;
   inset: 0;
@@ -1525,6 +1591,24 @@ section {
     background-position:
       220px 160px,
       260px 240px;
+  }
+}
+
+@keyframes ambientShootingStar {
+  0%,
+  58%,
+  100% {
+    opacity: 0;
+    transform: translate3d(0, 0, 0) rotate(var(--star-rotate));
+  }
+
+  62% {
+    opacity: 1;
+  }
+
+  74% {
+    opacity: 0;
+    transform: translate3d(-92vw, 42vh, 0) rotate(var(--star-rotate));
   }
 }
 
