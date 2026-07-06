@@ -20,15 +20,30 @@ const parisienne = Parisienne({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://convite-juliane-15.vercel.app"),
   title: "Juliane 15 Anos | Uma Noite Estrelada",
   description:
-    "Voce e nosso convidado para celebrar os 15 anos de Juliane em uma noite inesquecivel.",
+    "Você é nosso convidado para celebrar os 15 anos de Juliane em uma noite inesquecível.",
   openGraph: {
     title: "Juliane 15 Anos | Uma Noite Estrelada",
     description:
-      "Sob a luz das estrelas, um sonho esta prestes a se tornar realidade.",
+      "Toque no cartão virtual para abrir o convite da Juliane.",
     type: "website",
-    images: ["/images/convite-estrelado-juliane-v2.png"],
+    url: "/convite",
+    images: [
+      {
+        url: "/images/cartao-abrir-convite-juliane-v1.png",
+        width: 1080,
+        height: 1920,
+        alt: "Cartão virtual Juliane 15 anos com botão Abrir Convite",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Juliane 15 Anos | Uma Noite Estrelada",
+    description: "Toque no cartão virtual para abrir o convite da Juliane.",
+    images: ["/images/cartao-abrir-convite-juliane-v1.png"],
   },
   robots: {
     index: true,

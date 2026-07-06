@@ -245,7 +245,7 @@ export default function AdminPage() {
   }
 
   function getInviteLink() {
-    return `${window.location.origin}/convite`;
+    return `${window.location.origin}/convite?cartao=1`;
   }
 
   function getInviteMessage() {
@@ -255,7 +255,7 @@ Data: ${eventInfo.dateLabel}
 Horario: ${eventInfo.timeLabel}
 Local: ${eventInfo.venueName}
 
-Confirme sua presença pelo convite digital:
+Toque no cartão virtual para abrir o convite:
 ${getInviteLink()}
 
 Esperamos você sob as estrelas.`;
@@ -688,23 +688,23 @@ function SharePanel({
       </div>
       <div className="theme-preview">
         <div>
-          <span>Imagem do tema</span>
-          <strong>Uma Noite Estrelada</strong>
-          <p>Use esta imagem como capa visual junto com o link único do convite.</p>
+          <span>Cartão clicável</span>
+          <strong>Abrir Convite</strong>
+          <p>Use este cartão virtual como imagem de preview do link do convite.</p>
           <div className="share-actions">
-            <a href="/images/convite-estrelado-juliane-v2.png" target="_blank">
-              Abrir imagem
+            <a href="/images/cartao-abrir-convite-juliane-v1.png" target="_blank">
+              Abrir cartão
             </a>
             <button
               onClick={() => {
                 navigator.clipboard.writeText(
-                  `${window.location.origin}/images/convite-estrelado-juliane-v2.png`,
+                  `${window.location.origin}/images/cartao-abrir-convite-juliane-v1.png`,
                 );
-                setMessage("Link da imagem do tema copiado.");
+                setMessage("Link do cartão virtual copiado.");
               }}
             >
               <Copy size={15} />
-              Copiar link da imagem
+              Copiar link do cartão
             </button>
           </div>
         </div>
