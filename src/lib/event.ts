@@ -19,9 +19,9 @@ export const eventInfo = {
 
 export const defaultContent = {
   about:
-    "Cada pessoa e feita de historias, sonhos, encontros e momentos inesqueciveis. A Juliane cresceu cercada de amor, construindo memorias, descobrindo sonhos e iluminando a vida das pessoas que caminham ao seu lado. Agora, aos 15 anos, uma nova fase comeca.",
+    "Cada pessoa é feita de histórias, sonhos, encontros e momentos inesquecíveis. A Juliane cresceu cercada de amor, construindo memórias, descobrindo sonhos e iluminando a vida das pessoas que caminham ao seu lado. Agora, aos 15 anos, uma nova fase começa.",
   final:
-    "Algumas noites passam. Outras se tornam lembrancas para toda a vida. Esperamos voce para celebrar conosco uma noite de sonhos, alegria e muitas estrelas.",
+    "Algumas noites passam. Outras se tornam lembranças para toda a vida. Esperamos você para celebrar conosco uma noite de sonhos, alegria e muitas estrelas.",
   profilePlaceholders: [
     "Hobbies",
     "Musicas favoritas",
@@ -42,11 +42,11 @@ export const defaultContent = {
     {
       category: "Beleza",
       name: "Perfume especial",
-      detail: "Sugestao elegante para uma nova fase.",
+      detail: "Sugestão elegante para uma nova fase.",
       meta: "Prioridade alta",
     },
     {
-      category: "Acessorios",
+      category: "Acessórios",
       name: "Joia delicada",
       detail: "Tons dourados ou prata clara combinam com o tema.",
       meta: "Sem preco obrigatorio",

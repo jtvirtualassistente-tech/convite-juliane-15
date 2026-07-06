@@ -37,7 +37,7 @@ export function defaultAdminContent(): AdminContent {
     heroTitle: "Juliane",
     heroSubtitle: "Sob a luz das estrelas, um sonho esta prestes a se tornar realidade.",
     inviteText:
-      "Existem momentos que ficam guardados para sempre em nossa memoria. E este sera um deles. Com muita alegria, convidamos voce para celebrar uma noite muito especial.",
+      "Existem momentos que ficam guardados para sempre em nossa memória. E este será um deles. Com muita alegria, convidamos você para celebrar uma noite muito especial.",
     aboutText: defaultContent.about,
     finalText: defaultContent.final,
     dressCode: "",

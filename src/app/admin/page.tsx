@@ -40,7 +40,7 @@ const menuItems = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
   { id: "guests", label: "Convidados", icon: Users },
   { id: "gifts", label: "Presentes", icon: Gift },
-  { id: "settings", label: "Configuracoes", icon: Settings },
+  { id: "settings", label: "Configurações", icon: Settings },
 ] satisfies Array<{ id: AdminSection; label: string; icon: typeof LayoutDashboard }>;
 
 export default function AdminPage() {
@@ -100,7 +100,7 @@ export default function AdminPage() {
       setRsvps([]);
       setGifts([]);
       setMessage(
-        "Firebase ativo: as confirmacoes sao salvas em rsvps. Consulte no Firebase Console enquanto o painel sem login nao usa API administrativa.",
+        "Firebase ativo: as confirmações são salvas em rsvps. Consulte no Firebase Console enquanto o painel sem login não usa API administrativa.",
       );
     }
   }
@@ -151,7 +151,7 @@ export default function AdminPage() {
       setMessage("Pessoa adicionada a lista.");
       await loadAdminData();
     } catch (reason) {
-      setError(getFriendlyError(reason, "Nao foi possivel cadastrar a pessoa."));
+      setError(getFriendlyError(reason, "Não foi possível cadastrar a pessoa."));
     }
   }
 
@@ -163,19 +163,19 @@ export default function AdminPage() {
       await createGift({
         name: String(formData.get("name") ?? ""),
         category: String(formData.get("category") ?? "Outros"),
-        description: String(formData.get("description") ?? ""),
-        imageUrl: String(formData.get("imageUrl") ?? ""),
-        linkUrl: String(formData.get("linkUrl") ?? ""),
-        size: String(formData.get("size") ?? ""),
-        color: String(formData.get("color") ?? ""),
-        notes: String(formData.get("notes") ?? ""),
-        priority: String(formData.get("priority") ?? "Normal"),
+        description: "",
+        imageUrl: "",
+        linkUrl: "",
+        size: "",
+        color: "",
+        notes: "",
+        priority: "",
         active: true,
       });
       setGifts(await listGifts());
-      setMessage("Sugestao de presente adicionada.");
+      setMessage("Sugestão de presente adicionada.");
     } catch (reason) {
-      setError(getFriendlyError(reason, "Nao foi possivel salvar o presente."));
+      setError(getFriendlyError(reason, "Não foi possível salvar o presente."));
     }
   }
 
@@ -186,9 +186,9 @@ export default function AdminPage() {
     try {
       await removeGift(id);
       setGifts(await listGifts());
-      setMessage("Sugestao removida.");
+      setMessage("Sugestão removida.");
     } catch (reason) {
-      setError(getFriendlyError(reason, "Nao foi possivel remover o presente."));
+      setError(getFriendlyError(reason, "Não foi possível remover o presente."));
     }
   }
 
@@ -216,7 +216,7 @@ export default function AdminPage() {
     const rsvpRows = rsvps
       .map((rsvp) =>
         [
-          "confirmacao",
+          "confirmação",
           rsvp.name,
           rsvp.phone,
           rsvp.status,
@@ -255,15 +255,15 @@ Data: ${eventInfo.dateLabel}
 Horario: ${eventInfo.timeLabel}
 Local: ${eventInfo.venueName}
 
-Confirme sua presenca pelo convite digital:
+Confirme sua presença pelo convite digital:
 ${getInviteLink()}
 
-Esperamos voce sob as estrelas.`;
+Esperamos você sob as estrelas.`;
   }
 
   async function copyInviteLink() {
     await navigator.clipboard.writeText(getInviteLink());
-    setMessage("Link unico do convite copiado.");
+    setMessage("Link único do convite copiado.");
   }
 
   async function copyInviteMessage() {
@@ -286,7 +286,7 @@ Esperamos voce sob as estrelas.`;
       <main className="admin-page">
         <section className="admin-login">
           <form className="route-card route-form" onSubmit={unlockWithCode}>
-            <span className="section-eyebrow">Area restrita</span>
+            <span className="section-eyebrow">Área restrita</span>
             <h1>Painel Administrativo</h1>
             <label>
               Codigo do organizador
@@ -419,12 +419,12 @@ function RsvpPanel({ rsvps }: { rsvps: OpenRsvpRecord[] }) {
       <div className="admin-panel-header">
         <div>
           <h2>Confirmacoes recebidas</h2>
-          <p>Respostas enviadas pelo link unico do convite.</p>
+          <p>Respostas enviadas pelo link único do convite.</p>
         </div>
       </div>
       <div className="rsvp-list">
         {rsvps.length === 0 ? (
-          <p className="empty-state">Nenhuma confirmacao recebida ainda.</p>
+          <p className="empty-state">Nenhuma confirmação recebida ainda.</p>
         ) : (
           rsvps.map((rsvp) => (
             <div className="rsvp-card" key={rsvp.id}>
@@ -433,7 +433,7 @@ function RsvpPanel({ rsvps }: { rsvps: OpenRsvpRecord[] }) {
                 <span>{rsvp.phone}</span>
               </div>
               <em className={rsvp.status}>{rsvp.status}</em>
-              <p>{rsvp.people.join(", ") || "Nao comparecera"}</p>
+              <p>{rsvp.people.join(", ") || "Não comparecerá"}</p>
               <small>{rsvp.totalPeople} pessoa(s)</small>
             </div>
           ))
@@ -493,7 +493,7 @@ function GuestsPanel({
             <div className="admin-row" key={guest.id}>
               <span>{guest.mainGuestName}</span>
               <em className={guest.status}>{guest.status}</em>
-              <span>Convite unico</span>
+              <span>Convite único</span>
               <button onClick={copyInviteLink} title="Copiar link">
                 <Copy size={15} />
               </button>
@@ -547,52 +547,16 @@ function GiftForm({
         <Gift size={18} />
       </div>
       <label>
-        Nome
-        <input name="name" required />
-      </label>
-      <label>
         Categoria
-        <select name="category">
-          <option>Perfumes</option>
-          <option>Maquiagem e beleza</option>
-          <option>Roupas</option>
-          <option>Acessorios</option>
-          <option>Livros</option>
-          <option>Experiencias</option>
-          <option>Outros</option>
-        </select>
+        <input
+          name="category"
+          placeholder="Ex.: Maquiagem e Beleza"
+          required
+        />
       </label>
       <label>
-        Descricao
-        <textarea name="description" rows={3} />
-      </label>
-      <label>
-        Link externo
-        <input name="linkUrl" placeholder="https://" />
-      </label>
-      <label>
-        Imagem
-        <input name="imageUrl" placeholder="URL da imagem" />
-      </label>
-      <label>
-        Tamanho
-        <input name="size" />
-      </label>
-      <label>
-        Cor
-        <input name="color" />
-      </label>
-      <label>
-        Prioridade
-        <select name="priority">
-          <option>Alta</option>
-          <option>Normal</option>
-          <option>Baixa</option>
-        </select>
-      </label>
-      <label>
-        Observacao
-        <input name="notes" />
+        Nome do produto
+        <input name="name" placeholder="Ex.: Gloss" required />
       </label>
       <button className="primary-button" type="submit">
         Salvar presente
@@ -612,7 +576,7 @@ function GiftsList({
     <article className="admin-panel">
       <div className="admin-panel-header">
         <div>
-          <h2>Sugestoes de presentes</h2>
+          <h2>Sugestões de presentes</h2>
           <p>Catalogue itens para incluir na lista do convite.</p>
         </div>
       </div>
@@ -625,12 +589,6 @@ function GiftsList({
               <div>
                 <span>{gift.category}</span>
                 <strong>{gift.name}</strong>
-                <p>{gift.description}</p>
-                <small>
-                  {gift.size ? `Tamanho: ${gift.size}. ` : ""}
-                  {gift.color ? `Cor: ${gift.color}. ` : ""}
-                  {gift.priority ? `Prioridade: ${gift.priority}.` : ""}
-                </small>
               </div>
               <button onClick={() => onDelete(gift.id)}>
                 <Trash2 size={15} />
@@ -654,7 +612,7 @@ function SettingsForm({
     <form className="admin-panel route-form settings-form" action={handleSaveContent}>
       <div className="admin-panel-header">
         <div>
-          <h2>Configuracoes e textos</h2>
+          <h2>Configurações e textos</h2>
           <p>Campos preparados para as edicoes propostas no convite.</p>
         </div>
         <Save size={18} />
@@ -732,7 +690,7 @@ function SharePanel({
         <div>
           <span>Imagem do tema</span>
           <strong>Uma Noite Estrelada</strong>
-          <p>Use esta imagem como capa visual junto com o link unico do convite.</p>
+          <p>Use esta imagem como capa visual junto com o link único do convite.</p>
           <div className="share-actions">
             <a href="/images/convite-estrelado-juliane-v2.png" target="_blank">
               Abrir imagem
@@ -754,7 +712,7 @@ function SharePanel({
       <div className="share-grid">
         <div className="share-card">
           <div>
-            <strong>Convite unico da Juliane</strong>
+            <strong>Convite único da Juliane</strong>
             <span>{getInviteLink()}</span>
           </div>
           <div className="share-actions">

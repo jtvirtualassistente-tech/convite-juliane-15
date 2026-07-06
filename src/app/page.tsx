@@ -5,53 +5,14 @@ import { CheckCircle2, Gift, MapPin, Plus, Sparkles, Trash2, X } from "lucide-re
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import { type AdminGift } from "@/lib/admin-store";
+import { defaultGiftSuggestions } from "@/lib/gift-catalog";
 import { listGifts } from "@/lib/gift-service";
 import { submitOpenRsvp } from "@/lib/open-rsvp-service";
 
 const eventDate = new Date("2026-09-04T20:00:00-03:00").getTime();
 const mapsUrl = "https://maps.app.goo.gl/DxDRcY8edMxiECuA6";
 
-const fallbackGifts: AdminGift[] = [
-  {
-    id: "gift-perfume",
-    category: "Beleza",
-    name: "Perfume",
-    description: "Sugestao delicada para marcar esta nova fase.",
-    imageUrl: "",
-    linkUrl: "",
-    size: "",
-    color: "",
-    notes: "",
-    priority: "Alta",
-    active: true,
-  },
-  {
-    id: "gift-joia",
-    category: "Acessorios",
-    name: "Joia ou semijoia",
-    description: "Pecas em dourado, prata ou pontos de luz combinam com o tema.",
-    imageUrl: "",
-    linkUrl: "",
-    size: "",
-    color: "",
-    notes: "",
-    priority: "Media",
-    active: true,
-  },
-  {
-    id: "gift-experiencia",
-    category: "Experiencias",
-    name: "Presente livre",
-    description: "Uma lembranca especial escolhida com carinho.",
-    imageUrl: "",
-    linkUrl: "",
-    size: "",
-    color: "",
-    notes: "",
-    priority: "Opcional",
-    active: true,
-  },
-];
+const fallbackGifts = defaultGiftSuggestions;
 
 function useCountdown() {
   const [now, setNow] = useState<number | null>(null);
@@ -114,7 +75,7 @@ function OpeningScreen({ onOpen }: { onOpen: () => void }) {
     >
       <div className="shooting-star" />
       <p className="opening-kicker">
-        Uma noite especial esta prestes a comecar...
+        Uma noite especial, prestes a começar...
       </p>
       <div className="opening-title">
         <span>Juliane</span>
@@ -166,8 +127,8 @@ function InvitationCard({
         </div>
 
         <p className="invite-phrase">
-          Para viver as emocoes deste dia tao importante, quero estar ao lado de
-          pessoas como voce!
+          Para viver as emoções deste dia tão importante, quero estar ao lado de
+          pessoas como você!
         </p>
 
         <div className="invite-date-grid">
@@ -182,22 +143,24 @@ function InvitationCard({
           <strong>Cerimonial Palace</strong>
         </div>
 
+        <p className="invite-deadline">Confirme sua presença até 20/08/2026</p>
+
         <InlineCountdown />
 
-        <p className="invite-hint">Clique nos icones para interagir</p>
+        <p className="invite-hint">Clique nos ícones para interagir</p>
 
         <div className="invite-actions" aria-label="Acoes do convite">
           <button className="invite-action" onClick={onGifts} type="button">
             <Gift size={30} />
-            <span>Sugestoes de presentes</span>
+            <span>Sugestões de presentes</span>
           </button>
           <button className="invite-action" onClick={onRsvp} type="button">
             <CheckCircle2 size={32} />
-            <span>Confirme sua presenca</span>
+            <span>Confirme sua presença</span>
           </button>
           <a className="invite-action" href={mapsUrl} target="_blank">
             <MapPin size={31} />
-            <span>Localizacao</span>
+            <span>Localização</span>
           </a>
         </div>
       </Reveal>
@@ -215,6 +178,40 @@ function GiftModal({
   onClose: () => void;
 }) {
   const activeGifts = gifts.filter((gift) => gift.active);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [reminders, setReminders] = useState<string[]>([]);
+  const groupedGifts = useMemo(() => {
+    return activeGifts.reduce<Record<string, AdminGift[]>>((groups, gift) => {
+      const category = gift.category || "Sugestões";
+      groups[category] = [...(groups[category] ?? []), gift];
+      return groups;
+    }, {});
+  }, [activeGifts]);
+  const categories = Object.keys(groupedGifts).sort((a, b) =>
+    a.localeCompare(b, "pt-BR"),
+  );
+
+  useEffect(() => {
+    if (!open) return;
+    try {
+      setReminders(JSON.parse(window.localStorage.getItem("gift-reminders") ?? "[]"));
+    } catch {
+      setReminders([]);
+    }
+  }, [open]);
+
+  function toggleReminder(giftId: string) {
+    const nextReminders = reminders.includes(giftId)
+      ? reminders.filter((id) => id !== giftId)
+      : [...reminders, giftId];
+    setReminders(nextReminders);
+    window.localStorage.setItem("gift-reminders", JSON.stringify(nextReminders));
+  }
+
+  function closeModal() {
+    setSelectedCategory(null);
+    onClose();
+  }
 
   return (
     <AnimatePresence>
@@ -234,36 +231,58 @@ function GiftModal({
             <button
               className="icon-button modal-close"
               type="button"
-              aria-label="Fechar sugestoes"
-              onClick={onClose}
+              aria-label="Fechar sugestões"
+              onClick={closeModal}
             >
               <X size={18} />
             </button>
-            <span className="section-eyebrow">Sugestoes de presentes</span>
-            <h2>Lista da Juliane</h2>
-            <p>
-              Sua presenca e o maior presente. Para quem desejar presentear,
-              estas sao algumas sugestoes cadastradas.
-            </p>
-            <div className="gift-modal-list">
-              {activeGifts.map((gift) => (
-                <article className="gift-modal-card" key={gift.id}>
-                  <span>{gift.category || "Sugestao"}</span>
-                  <h3>{gift.name}</h3>
-                  {gift.description ? <p>{gift.description}</p> : null}
-                  <div className="gift-meta-row">
-                    {gift.size ? <small>Tamanho: {gift.size}</small> : null}
-                    {gift.color ? <small>Cor: {gift.color}</small> : null}
-                    {gift.priority ? <small>{gift.priority}</small> : null}
-                  </div>
-                  {gift.linkUrl ? (
-                    <a href={gift.linkUrl} target="_blank">
-                      Ver sugestao
-                    </a>
-                  ) : null}
-                </article>
-              ))}
-            </div>
+            <span className="section-eyebrow">Sugestões de presentes</span>
+            <h2>{selectedCategory ?? "Lista da Juliane"}</h2>
+            {selectedCategory ? (
+              <>
+                <p>Marque os itens que deseja lembrar ao escolher o presente.</p>
+                <button
+                  className="gift-back-button"
+                  onClick={() => setSelectedCategory(null)}
+                  type="button"
+                >
+                  Voltar para categorias
+                </button>
+                <div className="gift-check-list">
+                  {groupedGifts[selectedCategory].map((gift) => (
+                    <label className="gift-check-item" key={gift.id}>
+                      <input
+                        checked={reminders.includes(gift.id)}
+                        onChange={() => toggleReminder(gift.id)}
+                        type="checkbox"
+                      />
+                      <span>{gift.name}</span>
+                    </label>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <>
+                <p>
+                  Sua presença é o nosso maior presente. Para quem deseja
+                  presentear a Juliane com uma lembrança especial, reunimos
+                  sugestões delicadas para este momento.
+                </p>
+                <div className="gift-category-grid">
+                  {categories.map((category) => (
+                    <button
+                      className="gift-category-card"
+                      key={category}
+                      onClick={() => setSelectedCategory(category)}
+                      type="button"
+                    >
+                      <span>{groupedGifts[category].length} sugestões</span>
+                      <strong>{category}</strong>
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
           </motion.div>
         </motion.div>
       ) : null}
@@ -328,16 +347,16 @@ function RsvpModal({
             <button
               className="icon-button modal-close"
               type="button"
-              aria-label="Fechar confirmacao"
+              aria-label="Fechar confirmação"
               onClick={onClose}
             >
               <X size={18} />
             </button>
             <span className="section-eyebrow">RSVP</span>
-            <h2>Confirme sua presenca</h2>
+            <h2>Confirme sua presença</h2>
             <p>
-              Informe seu nome e adicione todos os acompanhantes que irao com
-              voce. Se nao puder comparecer, basta marcar a opcao de recusa.
+              Informe seu nome e adicione todos os acompanhantes que irão com
+              você. Se não puder comparecer, basta marcar a opção de recusa.
             </p>
             <label>
               Nome
@@ -348,7 +367,7 @@ function RsvpModal({
                 value={name}
               />
             </label>
-            <div className="choice-grid" role="radiogroup" aria-label="Presenca">
+            <div className="choice-grid" role="radiogroup" aria-label="Presença">
               <button
                 type="button"
                 className={answer === "yes" ? "choice active" : "choice"}
@@ -361,7 +380,7 @@ function RsvpModal({
                 className={answer === "no" ? "choice active" : "choice"}
                 onClick={() => setAnswer("no")}
               >
-                Infelizmente nao poderei comparecer
+                Infelizmente não poderei comparecer
               </button>
             </div>
             {answer === "yes" ? (
@@ -408,11 +427,11 @@ function RsvpModal({
             </label>
             {error ? <p className="form-error">{error}</p> : null}
             <button className="primary-button" disabled={sent} type="submit">
-              {sent ? "Enviando..." : "Enviar confirmacao"}
+              {sent ? "Enviando..." : "Enviar confirmação"}
             </button>
             <small>
               Os dados informados serao utilizados exclusivamente para
-              organizacao e controle de presenca deste evento.
+              organização e controle de presença deste evento.
             </small>
           </motion.form>
         </motion.div>
@@ -431,7 +450,7 @@ function getFriendlyRsvpError(reason: unknown) {
     return reason.issues
       .map((issue: { path?: Array<string | number>; message?: string }) => {
         if (issue.path?.includes("people")) {
-          return "Informe pelo menos um nome na lista de pessoas ou escolha que nao podera comparecer.";
+          return "Informe pelo menos um nome na lista de pessoas ou escolha que não poderá comparecer.";
         }
         return issue.message ?? "Verifique os dados informados.";
       })
@@ -440,7 +459,7 @@ function getFriendlyRsvpError(reason: unknown) {
 
   return reason instanceof Error
     ? reason.message
-    : "Nao foi possivel concluir sua confirmacao.";
+    : "Não foi possível concluir sua confirmação.";
 }
 
 function SuccessOverlay({
@@ -465,8 +484,8 @@ function SuccessOverlay({
             animate={{ scale: 1, y: 0 }}
           >
             <Sparkles size={32} />
-            <h2>Presenca confirmada</h2>
-            <p>Que alegria saber que voce estara conosco nesta noite especial.</p>
+            <h2>Presença confirmada</h2>
+            <p>Que alegria saber que você estará conosco nesta noite especial.</p>
             <button className="primary-button" onClick={onEnter}>
               Voltar ao convite
             </button>

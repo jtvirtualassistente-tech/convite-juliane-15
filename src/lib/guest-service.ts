@@ -87,13 +87,13 @@ export async function submitRsvp(payload: RsvpPayload) {
 
   if (Date.now() > deadline) {
     throw new Error(
-      "O periodo de confirmacao online foi encerrado. Para mais informacoes, entre em contato com os organizadores da festa.",
+      "O período de confirmação online foi encerrado. Para mais informações, entre em contato com os organizadores da festa.",
     );
   }
 
   const guest = await findGuestByCode(parsed.inviteCode);
 
-  if (!guest) throw new Error("Nao conseguimos localizar este convite.");
+  if (!guest) throw new Error("Não conseguimos localizar este convite.");
   if (!guest.active) throw new Error("Este convite nao esta disponivel.");
   if (parsed.companions.length > guest.maxCompanions) {
     throw new Error(`Seu convite permite ate ${guest.maxCompanions} acompanhantes.`);
@@ -119,7 +119,7 @@ export async function submitRsvp(payload: RsvpPayload) {
 
   await runTransaction(db, async (transaction) => {
     const current = await transaction.get(guestRef);
-    if (!current.exists()) throw new Error("Nao conseguimos localizar este convite.");
+    if (!current.exists()) throw new Error("Não conseguimos localizar este convite.");
 
     const data = current.data();
     if (!data.active) throw new Error("Este convite nao esta disponivel.");

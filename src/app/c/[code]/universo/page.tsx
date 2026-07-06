@@ -50,10 +50,10 @@ export default function UniversePage({ params }: Props) {
         <div className="stars-layer" />
         <section className="route-center">
           <div className="route-card">
-            <h1>Area reservada</h1>
-            <p>Esta area fica disponivel apos a confirmacao positiva da presenca.</p>
+            <h1>Área reservada</h1>
+            <p>Esta área fica disponível após a confirmação positiva da presença.</p>
             <Link className="primary-button" href={`/c/${code}`}>
-              Confirmar presenca
+              Confirmar presença
             </Link>
           </div>
         </section>
@@ -87,7 +87,7 @@ export default function UniversePage({ params }: Props) {
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
         >
-          <span className="section-eyebrow">Area privada</span>
+          <span className="section-eyebrow">Área privada</span>
           <h1>O universo da Juliane</h1>
           <p>{defaultContent.about}</p>
         </motion.div>
@@ -121,7 +121,7 @@ export default function UniversePage({ params }: Props) {
       <section className="gifts-section" id="presentes">
         <div className="section-heading">
           <span className="section-eyebrow">Sonhos e presentes</span>
-          <h2>Sua presenca e o nosso maior presente.</h2>
+          <h2>Sua presença é o nosso maior presente.</h2>
         </div>
         <div className="gift-grid">
           {defaultContent.gifts.map((gift) => (

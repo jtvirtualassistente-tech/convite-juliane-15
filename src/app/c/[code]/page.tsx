@@ -53,7 +53,7 @@ export default function InvitePage({ params }: Props) {
 
       setSuccess(result.status as "confirmed" | "declined");
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "Nao foi possivel enviar.");
+      setError(reason instanceof Error ? reason.message : "Não foi possível enviar.");
     } finally {
       setSubmitting(false);
     }
@@ -77,7 +77,7 @@ export default function InvitePage({ params }: Props) {
         <section className="route-center">
           <div className="route-card">
             <h1>Convite nao encontrado</h1>
-            <p>Nao conseguimos localizar este convite. Verifique o link recebido.</p>
+            <p>Não conseguimos localizar este convite. Verifique o link recebido.</p>
             <Link className="primary-button" href="/">
               Voltar
             </Link>
@@ -100,8 +100,8 @@ export default function InvitePage({ params }: Props) {
           <h1>Juliane</h1>
           <strong>15 anos</strong>
           <p>
-            {guest.mainGuestName}, voce faz parte desta historia. Confirme sua
-            presenca ate {eventInfo.rsvpDeadlineLabel}.
+            {guest.mainGuestName}, você faz parte desta história. Confirme sua
+            presença até {eventInfo.rsvpDeadlineLabel}.
           </p>
           <div className="info-grid">
             <div>
@@ -132,8 +132,8 @@ export default function InvitePage({ params }: Props) {
           {success === "confirmed" ? (
             <div className="route-success">
               <Sparkles size={34} />
-              <h2>Presenca confirmada</h2>
-              <p>Que alegria saber que voce estara conosco.</p>
+              <h2>Presença confirmada</h2>
+              <p>Que alegria saber que você estará conosco.</p>
               <Link className="primary-button" href={`/c/${code}/universo`}>
                 Entrar no universo da Juliane
                 <ArrowRight size={17} />
@@ -193,7 +193,7 @@ export default function InvitePage({ params }: Props) {
               </label>
               {error ? <p className="form-error">{error}</p> : null}
               <button className="primary-button" disabled={submitting} type="submit">
-                {submitting ? "Enviando..." : "Enviar confirmacao"}
+                {submitting ? "Enviando..." : "Enviar confirmação"}
               </button>
             </>
           )}

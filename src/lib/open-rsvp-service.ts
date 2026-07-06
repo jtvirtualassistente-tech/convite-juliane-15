@@ -24,7 +24,7 @@ export async function submitOpenRsvp(payload: OpenRsvpPayload) {
 
   if (Date.now() > deadline) {
     throw new Error(
-      "O periodo de confirmacao online foi encerrado. Para mais informacoes, entre em contato com os organizadores da festa.",
+      "O período de confirmação online foi encerrado. Para mais informações, entre em contato com os organizadores da festa.",
     );
   }
 

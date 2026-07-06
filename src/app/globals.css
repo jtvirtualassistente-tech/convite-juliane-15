@@ -2197,6 +2197,21 @@ section {
   text-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
 }
 
+.invite-deadline {
+  width: min(100%, 370px);
+  margin: clamp(12px, 3vw, 18px) auto 0;
+  padding: 7px 10px;
+  border: 1px solid rgba(255, 230, 164, 0.32);
+  border-radius: 999px;
+  color: #fff0c7;
+  background: rgba(1, 8, 31, 0.48);
+  font-size: clamp(0.72rem, 2.8vw, 0.9rem);
+  font-weight: 900;
+  line-height: 1.15;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
 .inline-countdown {
   display: flex;
   align-items: center;
@@ -2300,6 +2315,82 @@ section {
 .gift-modal-list {
   display: grid;
   gap: 12px;
+}
+
+.gift-category-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.gift-category-card {
+  display: grid;
+  gap: 6px;
+  width: 100%;
+  min-height: 76px;
+  padding: 14px;
+  border: 1px solid rgba(255, 226, 164, 0.22);
+  border-radius: 8px;
+  color: #fff;
+  text-align: left;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.gift-category-card span {
+  color: #ffe7a0;
+  font-size: 0.7rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.gift-category-card strong {
+  font-family: var(--font-serif);
+  font-size: 1.2rem;
+  line-height: 1.05;
+}
+
+.gift-back-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  min-height: 38px;
+  margin-bottom: 12px;
+  padding: 0 14px;
+  border: 1px solid rgba(255, 226, 164, 0.28);
+  border-radius: 999px;
+  color: #ffe7a0;
+  background: rgba(255, 255, 255, 0.06);
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+.gift-check-list {
+  display: grid;
+  gap: 8px;
+}
+
+.gift-check-item {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 10px;
+  align-items: center;
+  min-height: 48px;
+  padding: 10px 12px;
+  border: 1px solid rgba(255, 226, 164, 0.18);
+  border-radius: 8px;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.055);
+}
+
+.gift-check-item input {
+  width: 18px;
+  height: 18px;
+  accent-color: #d9bd74;
+}
+
+.gift-check-item span {
+  font-weight: 700;
+  line-height: 1.25;
 }
 
 .gift-modal-card {
