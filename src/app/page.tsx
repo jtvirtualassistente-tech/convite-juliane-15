@@ -497,7 +497,7 @@ export default function Home() {
     <main className="invite-page">
       <Image
         className="site-background"
-        src="/images/convite-estrelado-mobile.png"
+        src="/images/convite-estrelado-juliane-v2.png"
         alt=""
         fill
         priority

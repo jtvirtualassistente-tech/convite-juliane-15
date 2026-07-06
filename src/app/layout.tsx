@@ -28,7 +28,7 @@ export const metadata: Metadata = {
     description:
       "Sob a luz das estrelas, um sonho esta prestes a se tornar realidade.",
     type: "website",
-    images: ["/images/convite-estrelado-mobile.png"],
+    images: ["/images/convite-estrelado-juliane-v2.png"],
   },
   robots: {
     index: true,
