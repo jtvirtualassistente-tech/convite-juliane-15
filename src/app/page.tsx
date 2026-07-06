@@ -1,72 +1,56 @@
 "use client";
 
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import {
-  CalendarDays,
-  ChevronLeft,
-  ChevronRight,
-  Clock,
-  Gift,
-  Heart,
-  Image as ImageIcon,
-  MapPin,
-  Menu,
-  Moon,
-  Music2,
-  Plus,
-  Sparkles,
-  Star,
-  Trash2,
-  X,
-} from "lucide-react";
+import { CheckCircle2, Gift, MapPin, Plus, Sparkles, Trash2, X } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
+import { listAdminGifts, type AdminGift } from "@/lib/admin-store";
 import { submitOpenRsvp } from "@/lib/open-rsvp-service";
 
 const eventDate = new Date("2026-09-04T20:00:00-03:00").getTime();
 const mapsUrl = "https://maps.app.goo.gl/DxDRcY8edMxiECuA6";
 
-const privateNav = [
-  { label: "Inicio", target: "universo", icon: Star },
-  { label: "Juliane", target: "perfil", icon: Heart },
-  { label: "Memorias", target: "memorias", icon: ImageIcon },
-  { label: "Presentes", target: "presentes", icon: Gift },
-  { label: "Festa", target: "festa", icon: MapPin },
-];
-
-const giftItems = [
+const fallbackGifts: AdminGift[] = [
   {
+    id: "gift-perfume",
     category: "Beleza",
-    name: "Perfume especial",
-    detail: "Sugestao elegante para uma nova fase.",
-    meta: "Prioridade alta",
+    name: "Perfume",
+    description: "Sugestao delicada para marcar esta nova fase.",
+    imageUrl: "",
+    linkUrl: "",
+    size: "",
+    color: "",
+    notes: "",
+    priority: "Alta",
+    active: true,
   },
   {
+    id: "gift-joia",
     category: "Acessorios",
-    name: "Joia delicada",
-    detail: "Tons dourados ou prata clara combinam com o tema.",
-    meta: "Sem preco obrigatorio",
+    name: "Joia ou semijoia",
+    description: "Pecas em dourado, prata ou pontos de luz combinam com o tema.",
+    imageUrl: "",
+    linkUrl: "",
+    size: "",
+    color: "",
+    notes: "",
+    priority: "Media",
+    active: true,
   },
   {
+    id: "gift-experiencia",
     category: "Experiencias",
-    name: "Dia de passeio",
-    detail: "Uma lembranca vivida tambem pode virar estrela.",
-    meta: "Opcional",
+    name: "Presente livre",
+    description: "Uma lembranca especial escolhida com carinho.",
+    imageUrl: "",
+    linkUrl: "",
+    size: "",
+    color: "",
+    notes: "",
+    priority: "Opcional",
+    active: true,
   },
 ];
-
-const timeline = [
-  "Uma pequena estrela nasceu",
-  "Primeiros passos",
-  "Primeiros sonhos",
-  "Momentos inesqueciveis",
-  "Amigos e familia",
-  "Chegaram os 15 anos",
-];
-
-function scrollToId(id: string) {
-  document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
-}
 
 function useCountdown() {
   const [now, setNow] = useState<number | null>(null);
@@ -111,34 +95,12 @@ function Reveal({
   return (
     <motion.div
       className={className}
-      initial={reducedMotion ? false : { opacity: 0, y: 28 }}
-      whileInView={reducedMotion ? undefined : { opacity: 1, y: 0 }}
-      viewport={{ once: true, amount: 0.2 }}
+      initial={reducedMotion ? false : { opacity: 0, y: 22 }}
+      animate={reducedMotion ? undefined : { opacity: 1, y: 0 }}
       transition={{ duration: 0.75, delay, ease: "easeOut" }}
     >
       {children}
     </motion.div>
-  );
-}
-
-function Countdown({ compact = false }: { compact?: boolean }) {
-  const values = useCountdown();
-  const items = [
-    ["DIAS", values.days],
-    ["HORAS", values.hours],
-    ["MINUTOS", values.minutes],
-    ["SEGUNDOS", values.seconds],
-  ];
-
-  return (
-    <div className={compact ? "countdown countdown-compact" : "countdown"}>
-      {items.map(([label, value]) => (
-        <div className="countdown-card" key={label}>
-          <strong>{value}</strong>
-          <span>{label}</span>
-        </div>
-      ))}
-    </div>
   );
 }
 
@@ -147,129 +109,164 @@ function OpeningScreen({ onOpen }: { onOpen: () => void }) {
     <motion.section
       className="opening-screen"
       exit={{ opacity: 0, scale: 1.03 }}
-      transition={{ duration: 0.9, ease: "easeInOut" }}
+      transition={{ duration: 0.8, ease: "easeInOut" }}
     >
       <div className="shooting-star" />
-      <motion.p
-        className="opening-kicker"
-        initial={{ opacity: 0, y: 18 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.55, duration: 0.8 }}
-      >
+      <p className="opening-kicker">
         Uma noite especial esta prestes a comecar...
-      </motion.p>
-      <motion.div
-        className="opening-title"
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ delay: 1.35, duration: 1 }}
-      >
+      </p>
+      <div className="opening-title">
         <span>Juliane</span>
         <strong>15 anos</strong>
-      </motion.div>
-      <motion.button
+      </div>
+      <button
         className="primary-button opening-button"
         onClick={onOpen}
-        initial={{ opacity: 0, y: 18 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 2.05, duration: 0.7 }}
       >
         Abrir convite
-      </motion.button>
+      </button>
     </motion.section>
   );
 }
 
-function Header({
-  onRsvp,
-  opened,
-}: {
-  onRsvp: () => void;
-  opened: boolean;
-}) {
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const links = [
-    ["Convite", "convite"],
-    ["Contagem", "contagem"],
-    ["Universo", "universo"],
-  ];
-
-  if (!opened) return null;
+function InlineCountdown() {
+  const values = useCountdown();
 
   return (
-    <header className="site-header">
-      <button className="brand-button" onClick={() => scrollToId("convite")}>
-        Juliane <span>15</span>
-      </button>
-      <nav className="desktop-nav" aria-label="Navegacao principal">
-        {links.map(([label, target]) => (
-          <button key={target} onClick={() => scrollToId(target)}>
-            {label}
+    <div className="inline-countdown" aria-label="Contagem regressiva">
+      <span>Faltam</span>
+      <strong>{values.days} dias</strong>
+      <strong>{values.hours}h</strong>
+      <strong>{values.minutes}m</strong>
+      <strong>{values.seconds}s</strong>
+    </div>
+  );
+}
+
+function InvitationCard({
+  onGifts,
+  onRsvp,
+}: {
+  onGifts: () => void;
+  onRsvp: () => void;
+}) {
+  return (
+    <section className="single-invite-section" aria-label="Convite Juliane 15 anos">
+      <Reveal className="single-invite-card">
+        <div className="invite-ornament">
+          <Sparkles size={18} />
+          <span>Convite Especial</span>
+          <Sparkles size={18} />
+        </div>
+
+        <div className="invite-title-block">
+          <h1>Juliane</h1>
+          <strong>15 anos</strong>
+        </div>
+
+        <p className="invite-phrase">
+          Para viver as emocoes deste dia tao importante, quero estar ao lado de
+          pessoas como voce!
+        </p>
+
+        <div className="invite-date-grid">
+          <span className="invite-weekday">Sexta-feira</span>
+          <strong className="invite-day">04</strong>
+          <span className="invite-month">de setembro</span>
+          <span className="invite-time">as 20:00</span>
+        </div>
+
+        <div className="invite-local">
+          <span>Local</span>
+          <strong>Cerimonial Palace</strong>
+        </div>
+
+        <InlineCountdown />
+
+        <p className="invite-hint">Clique nos icones para interagir</p>
+
+        <div className="invite-actions" aria-label="Acoes do convite">
+          <button className="invite-action" onClick={onGifts} type="button">
+            <Gift size={30} />
+            <span>Sugestoes de presentes</span>
           </button>
-        ))}
-      </nav>
-      <div className="header-actions">
-        <button className="icon-button" aria-label="Musica">
-          <Music2 size={18} />
-        </button>
-        <button className="small-gold-button" onClick={onRsvp}>
-          Confirmar
-        </button>
-        <button
-          className="icon-button mobile-only"
-          aria-label="Abrir menu"
-          onClick={() => setMobileOpen(true)}
+          <button className="invite-action" onClick={onRsvp} type="button">
+            <CheckCircle2 size={32} />
+            <span>Confirme sua presenca</span>
+          </button>
+          <a className="invite-action" href={mapsUrl} target="_blank">
+            <MapPin size={31} />
+            <span>Localizacao</span>
+          </a>
+        </div>
+      </Reveal>
+    </section>
+  );
+}
+
+function GiftModal({
+  gifts,
+  open,
+  onClose,
+}: {
+  gifts: AdminGift[];
+  open: boolean;
+  onClose: () => void;
+}) {
+  const activeGifts = gifts.filter((gift) => gift.active);
+
+  return (
+    <AnimatePresence>
+      {open ? (
+        <motion.div
+          className="modal-backdrop"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
         >
-          <Menu size={20} />
-        </button>
-      </div>
-      <AnimatePresence>
-        {mobileOpen ? (
           <motion.div
-            className="mobile-menu"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+            className="rsvp-modal gift-modal"
+            initial={{ opacity: 0, y: 30, scale: 0.97 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.98 }}
           >
-            <motion.div
-              className="mobile-menu-panel"
-              initial={{ x: "100%" }}
-              animate={{ x: 0 }}
-              exit={{ x: "100%" }}
-              transition={{ ease: "easeOut", duration: 0.28 }}
+            <button
+              className="icon-button modal-close"
+              type="button"
+              aria-label="Fechar sugestoes"
+              onClick={onClose}
             >
-              <button
-                className="icon-button menu-close"
-                aria-label="Fechar menu"
-                onClick={() => setMobileOpen(false)}
-              >
-                <X size={20} />
-              </button>
-              {links.map(([label, target]) => (
-                <button
-                  key={target}
-                  onClick={() => {
-                    setMobileOpen(false);
-                    scrollToId(target);
-                  }}
-                >
-                  {label}
-                </button>
+              <X size={18} />
+            </button>
+            <span className="section-eyebrow">Sugestoes de presentes</span>
+            <h2>Lista da Juliane</h2>
+            <p>
+              Sua presenca e o maior presente. Para quem desejar presentear,
+              estas sao algumas sugestoes cadastradas.
+            </p>
+            <div className="gift-modal-list">
+              {activeGifts.map((gift) => (
+                <article className="gift-modal-card" key={gift.id}>
+                  <span>{gift.category || "Sugestao"}</span>
+                  <h3>{gift.name}</h3>
+                  {gift.description ? <p>{gift.description}</p> : null}
+                  <div className="gift-meta-row">
+                    {gift.size ? <small>Tamanho: {gift.size}</small> : null}
+                    {gift.color ? <small>Cor: {gift.color}</small> : null}
+                    {gift.priority ? <small>{gift.priority}</small> : null}
+                  </div>
+                  {gift.linkUrl ? (
+                    <a href={gift.linkUrl} target="_blank">
+                      Ver sugestao
+                    </a>
+                  ) : null}
+                </article>
               ))}
-              <button
-                className="primary-button"
-                onClick={() => {
-                  setMobileOpen(false);
-                  onRsvp();
-                }}
-              >
-                Confirmar minha presenca
-              </button>
-            </motion.div>
+            </div>
           </motion.div>
-        ) : null}
-      </AnimatePresence>
-    </header>
+        </motion.div>
+      ) : null}
+    </AnimatePresence>
   );
 }
 
@@ -286,7 +283,6 @@ function RsvpModal({
   const [sent, setSent] = useState(false);
   const [error, setError] = useState("");
   const [name, setName] = useState("");
-  const [phone, setPhone] = useState("");
   const [people, setPeople] = useState([""]);
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
@@ -297,7 +293,7 @@ function RsvpModal({
     try {
       await submitOpenRsvp({
         name,
-        phone,
+        phone: "",
         willAttend: answer === "yes",
         people: answer === "yes" ? people : [],
         reviewed: true,
@@ -337,28 +333,18 @@ function RsvpModal({
               <X size={18} />
             </button>
             <span className="section-eyebrow">RSVP</span>
-            <h2>Voce faz parte desta historia.</h2>
+            <h2>Confirme sua presenca</h2>
             <p>
-              A Juliane esta preparando uma noite muito especial e ficara muito
-              feliz em compartilhar este momento com voce. Confirme ate 20 de
-              agosto de 2026.
+              Informe seu nome e adicione todos os acompanhantes que irao com
+              voce. Se nao puder comparecer, basta marcar a opcao de recusa.
             </p>
             <label>
-              Nome do convidado
+              Nome
               <input
                 onChange={(event) => setName(event.target.value)}
                 required
                 placeholder="Digite seu nome"
                 value={name}
-              />
-            </label>
-            <label>
-              Telefone ou WhatsApp
-              <input
-                onChange={(event) => setPhone(event.target.value)}
-                required
-                placeholder="(00) 00000-0000"
-                value={phone}
               />
             </label>
             <div className="choice-grid" role="radiogroup" aria-label="Presenca">
@@ -379,7 +365,7 @@ function RsvpModal({
             </div>
             {answer === "yes" ? (
               <div className="companions">
-                <p>Adicione abaixo todas as pessoas que irao junto com voce.</p>
+                <p>Adicione todos os acompanhantes abaixo.</p>
                 {people.map((person, index) => (
                   <div className="person-row" key={index}>
                     <input
@@ -411,7 +397,7 @@ function RsvpModal({
                   type="button"
                 >
                   <Plus size={16} />
-                  Adicionar mais pessoa
+                  Adicionar pessoa
                 </button>
               </div>
             ) : null}
@@ -479,12 +465,9 @@ function SuccessOverlay({
           >
             <Sparkles size={32} />
             <h2>Presenca confirmada</h2>
-            <p>
-              Que alegria saber que voce estara conosco. Agora queremos
-              compartilhar um pouco mais desse momento especial com voce.
-            </p>
+            <p>Que alegria saber que voce estara conosco nesta noite especial.</p>
             <button className="primary-button" onClick={onEnter}>
-              Entrar no universo da Juliane
+              Voltar ao convite
             </button>
           </motion.div>
         </motion.div>
@@ -497,20 +480,19 @@ export default function Home() {
   const [opened, setOpened] = useState(false);
   const [rsvpOpen, setRsvpOpen] = useState(false);
   const [successOpen, setSuccessOpen] = useState(false);
-  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  const [giftsOpen, setGiftsOpen] = useState(false);
+  const [gifts, setGifts] = useState<AdminGift[]>(fallbackGifts);
 
-  const gallery = [
-    { label: "Sonhos", gradient: "linear-gradient(135deg,#d8c07b,#635090)" },
-    { label: "Familia", gradient: "linear-gradient(135deg,#b9d5ff,#182f63)" },
-    { label: "Amigos", gradient: "linear-gradient(135deg,#f2d6a2,#3b1749)" },
-    { label: "Memorias", gradient: "linear-gradient(135deg,#a8fff1,#101b47)" },
-  ];
+  useEffect(() => {
+    const savedGifts = listAdminGifts().filter((gift) => gift.active);
+    if (savedGifts.length > 0) setGifts(savedGifts);
+  }, []);
 
   return (
-    <main>
+    <main className="invite-page">
       <Image
         className="site-background"
-        src="/images/noite-estrelada-convite.png"
+        src="/images/convite-estrelado-mobile.png"
         alt=""
         fill
         priority
@@ -523,211 +505,23 @@ export default function Home() {
         <span />
         <span />
       </div>
-      <Header opened={opened} onRsvp={() => setRsvpOpen(true)} />
+
       <AnimatePresence>
         {!opened ? <OpeningScreen onOpen={() => setOpened(true)} /> : null}
       </AnimatePresence>
 
       <div className={opened ? "page-content visible" : "page-content"}>
-        <section className="hero-section" id="convite">
-          <Reveal className="hero-copy">
-            <span className="section-eyebrow">Uma noite estrelada</span>
-            <h1>Juliane</h1>
-            <strong>15 anos</strong>
-            <p className="hero-lead">
-              Sob a luz das estrelas, um sonho esta prestes a se tornar
-              realidade.
-            </p>
-            <p>
-              Existem momentos que ficam guardados para sempre em nossa memoria.
-              E este sera um deles. Com muita alegria, convidamos voce para
-              celebrar uma noite muito especial.
-            </p>
-            <div className="event-pills">
-              <span>04 de setembro de 2026</span>
-              <span>20h00</span>
-              <span>Cerimonial Palace</span>
-            </div>
-            <div className="hero-actions">
-              <button
-                className="primary-button"
-                onClick={() => setRsvpOpen(true)}
-              >
-                Confirmar minha presenca
-              </button>
-              <a className="ghost-button" href={mapsUrl} target="_blank">
-                Ver localizacao
-              </a>
-            </div>
-          </Reveal>
-        </section>
-
-        <section className="countdown-section" id="contagem">
-          <Reveal className="section-heading">
-            <span className="section-eyebrow">Contagem regressiva</span>
-            <h2>O ceu ja comeca a se preparar.</h2>
-          </Reveal>
-          <Reveal delay={0.15}>
-            <Countdown />
-          </Reveal>
-        </section>
-
-        <section className="invitation-art-section" aria-label="Imagem do tema">
-          <Reveal className="invitation-art-card">
-            <Image
-              alt="Ceu noturno estrelado com constelacoes e luz dourada no horizonte"
-              fill
-              sizes="(max-width: 720px) 92vw, 920px"
-              src="/images/noite-estrelada-convite.png"
-            />
-            <div>
-              <span className="section-eyebrow">Uma Noite Estrelada</span>
-              <h2>Um ceu preparado para sonhar.</h2>
-            </div>
-          </Reveal>
-        </section>
-
-        <section className="story-section" id="universo">
-          <Reveal className="section-heading">
-            <span className="section-eyebrow">Capitulo 3</span>
-            <h2>O universo da Juliane</h2>
-            <p>
-              Cada pessoa e feita de historias, sonhos, encontros e momentos
-              inesqueciveis. A Juliane cresceu cercada de amor, construindo
-              memorias, descobrindo sonhos e iluminando a vida das pessoas que
-              caminham ao seu lado.
-            </p>
-          </Reveal>
-        </section>
-
-        <section className="profile-section" id="perfil">
-          <Reveal className="profile-card">
-            <div className="profile-photo">
-              <Moon size={54} />
-            </div>
-            <div>
-              <span className="section-eyebrow">Conheca nossa estrela</span>
-              <h2>Juliane</h2>
-              <p>
-                Aos 15 anos, uma nova fase comeca. Esta festa representa mais
-                do que uma comemoracao: e a celebracao de tudo o que ja foi
-                vivido e de todos os sonhos que ainda estao por vir.
-              </p>
-            </div>
-          </Reveal>
-          <div className="detail-grid">
-            {[
-              "Hobbies",
-              "Musicas favoritas",
-              "Filmes e series",
-              "Comida favorita",
-              "Lugares dos sonhos",
-              "Curiosidades",
-            ].map((item, index) => (
-              <Reveal className="detail-card" delay={index * 0.04} key={item}>
-                <Sparkles size={18} />
-                <h3>{item}</h3>
-                <p>Placeholder editavel no painel administrativo.</p>
-              </Reveal>
-            ))}
-          </div>
-        </section>
-
-        <section className="timeline-section" id="memorias">
-          <Reveal className="section-heading">
-            <span className="section-eyebrow">Memorias</span>
-            <h2>Uma historia desenhada em constelacoes.</h2>
-          </Reveal>
-          <div className="timeline">
-            {timeline.map((item, index) => (
-              <Reveal className="timeline-item" delay={index * 0.05} key={item}>
-                <span>{String(index + 1).padStart(2, "0")}</span>
-                <h3>{item}</h3>
-                <p>Data, foto e descricao cadastraveis pelo painel.</p>
-              </Reveal>
-            ))}
-          </div>
-          <div className="gallery-grid">
-            {gallery.map((photo, index) => (
-              <button
-                className="photo-tile"
-                key={photo.label}
-                style={{ background: photo.gradient }}
-                onClick={() => setLightboxIndex(index)}
-              >
-                <span>{photo.label}</span>
-              </button>
-            ))}
-          </div>
-        </section>
-
-        <section className="gifts-section" id="presentes">
-          <Reveal className="section-heading">
-            <span className="section-eyebrow">Sonhos e presentes</span>
-            <h2>Sua presenca e o nosso maior presente.</h2>
-            <p>
-              Para quem deseja presentear a Juliane, estas sugestoes podem ser
-              cadastradas e organizadas por categoria.
-            </p>
-          </Reveal>
-          <div className="gift-grid">
-            {giftItems.map((gift) => (
-              <Reveal className="gift-card" key={gift.name}>
-                <span>{gift.category}</span>
-                <h3>{gift.name}</h3>
-                <p>{gift.detail}</p>
-                <small>{gift.meta}</small>
-              </Reveal>
-            ))}
-          </div>
-        </section>
-
-        <section className="event-section" id="festa">
-          <Reveal className="event-card">
-            <span className="section-eyebrow">Informacoes importantes</span>
-            <h2>Nos encontraremos sob as estrelas.</h2>
-            <div className="info-grid">
-              <div>
-                <CalendarDays size={20} />
-                <span>04 de setembro de 2026</span>
-              </div>
-              <div>
-                <Clock size={20} />
-                <span>20h00</span>
-              </div>
-              <div>
-                <MapPin size={20} />
-                <span>
-                  Cerimonial Palace, Rodovia Cachoeiro x Alegre, Km 3,8,
-                  Cachoeiro de Itapemirim - ES
-                </span>
-              </div>
-            </div>
-            <a className="primary-button" href={mapsUrl} target="_blank">
-              Abrir no Google Maps
-            </a>
-          </Reveal>
-          <Reveal className="final-message">
-            <h2>Nos encontraremos sob as estrelas</h2>
-            <p>
-              Algumas noites passam. Outras se tornam lembrancas para toda a
-              vida. Esperamos voce para celebrar conosco uma noite de sonhos,
-              alegria e muitas estrelas.
-            </p>
-            <Countdown compact />
-          </Reveal>
-        </section>
+        <InvitationCard
+          onGifts={() => setGiftsOpen(true)}
+          onRsvp={() => setRsvpOpen(true)}
+        />
       </div>
 
-      <nav className="bottom-nav" aria-label="Navegacao da area privada">
-        {privateNav.map(({ label, target, icon: Icon }) => (
-          <button key={target} onClick={() => scrollToId(target)}>
-            <Icon size={18} />
-            <span>{label}</span>
-          </button>
-        ))}
-      </nav>
-
+      <GiftModal
+        gifts={gifts.length > 0 ? gifts : fallbackGifts}
+        open={giftsOpen}
+        onClose={() => setGiftsOpen(false)}
+      />
       <RsvpModal
         open={rsvpOpen}
         onClose={() => setRsvpOpen(false)}
@@ -736,56 +530,7 @@ export default function Home() {
           setSuccessOpen(true);
         }}
       />
-      <SuccessOverlay
-        open={successOpen}
-        onEnter={() => {
-          setSuccessOpen(false);
-          scrollToId("universo");
-        }}
-      />
-
-      <AnimatePresence>
-        {lightboxIndex !== null ? (
-          <motion.div
-            className="lightbox"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            <button
-              className="icon-button modal-close"
-              aria-label="Fechar galeria"
-              onClick={() => setLightboxIndex(null)}
-            >
-              <X size={20} />
-            </button>
-            <button
-              className="icon-button lightbox-prev"
-              aria-label="Foto anterior"
-              onClick={() =>
-                setLightboxIndex(
-                  (lightboxIndex - 1 + gallery.length) % gallery.length,
-                )
-              }
-            >
-              <ChevronLeft />
-            </button>
-            <div
-              className="lightbox-image"
-              style={{ background: gallery[lightboxIndex].gradient }}
-            >
-              <span>{gallery[lightboxIndex].label}</span>
-            </div>
-            <button
-              className="icon-button lightbox-next"
-              aria-label="Proxima foto"
-              onClick={() => setLightboxIndex((lightboxIndex + 1) % gallery.length)}
-            >
-              <ChevronRight />
-            </button>
-          </motion.div>
-        ) : null}
-      </AnimatePresence>
+      <SuccessOverlay open={successOpen} onEnter={() => setSuccessOpen(false)} />
     </main>
   );
 }

@@ -33,7 +33,7 @@ export async function submitOpenRsvp(payload: OpenRsvpPayload) {
     id: `local-${Date.now()}`,
     eventId: EVENT_ID,
     name: parsed.name.trim(),
-    phone: parsed.phone.trim(),
+    phone: parsed.phone?.trim() ?? "",
     willAttend: parsed.willAttend,
     people,
     reviewed: parsed.reviewed,

@@ -19,7 +19,7 @@ export const rsvpSchema = z.object({
 
 export const openRsvpSchema = z.object({
   name: z.string().trim().min(2, "Informe seu nome."),
-  phone: phoneSchema,
+  phone: phoneSchema.or(z.literal("")).optional().default(""),
   willAttend: z.boolean(),
   people: z.array(z.string().trim().min(2)).max(300).default([]),
   reviewed: z.literal(true, {

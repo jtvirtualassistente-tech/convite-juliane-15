@@ -28,7 +28,7 @@ export type RsvpPayload = {
 
 export type OpenRsvpPayload = {
   name: string;
-  phone: string;
+  phone?: string;
   willAttend: boolean;
   people: string[];
   reviewed: boolean;
