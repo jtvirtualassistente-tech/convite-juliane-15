@@ -734,13 +734,13 @@ function SharePanel({
           <strong>Uma Noite Estrelada</strong>
           <p>Use esta imagem como capa visual junto com o link unico do convite.</p>
           <div className="share-actions">
-            <a href="/images/noite-estrelada-convite.png" target="_blank">
+            <a href="/images/convite-estrelado-mobile.png" target="_blank">
               Abrir imagem
             </a>
             <button
               onClick={() => {
                 navigator.clipboard.writeText(
-                  `${window.location.origin}/images/noite-estrelada-convite.png`,
+                  `${window.location.origin}/images/convite-estrelado-mobile.png`,
                 );
                 setMessage("Link da imagem do tema copiado.");
               }}

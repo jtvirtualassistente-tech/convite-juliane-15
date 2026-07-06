@@ -1197,10 +1197,29 @@ section {
 }
 
 .route-shell {
+  position: relative;
   min-height: 100vh;
+  overflow-x: hidden;
   background:
     radial-gradient(circle at 50% 0%, rgba(200, 182, 255, 0.2), transparent 34%),
-    linear-gradient(180deg, rgba(3, 7, 22, 0.72), rgba(3, 7, 22, 0.96));
+    linear-gradient(180deg, rgba(3, 7, 22, 0.72), rgba(3, 7, 22, 0.96)),
+    url("/images/convite-estrelado-mobile.png") center / cover fixed;
+}
+
+.route-shell::before {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  content: "";
+  background:
+    radial-gradient(circle at 50% 18%, rgba(255, 255, 255, 0.08), transparent 24%),
+    linear-gradient(180deg, rgba(3, 7, 22, 0.18), rgba(3, 7, 22, 0.62));
+}
+
+.route-shell > * {
+  position: relative;
+  z-index: 1;
 }
 
 .route-center {
@@ -1627,7 +1646,7 @@ section {
   color: white;
   background:
     linear-gradient(180deg, rgba(3, 7, 22, 0.08), rgba(3, 7, 22, 0.92)),
-    url("/images/noite-estrelada-convite.png") center / cover;
+    url("/images/convite-estrelado-mobile.png") center / cover;
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.16);
 }
 
