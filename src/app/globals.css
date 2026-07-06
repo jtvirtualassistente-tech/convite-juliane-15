@@ -2312,6 +2312,39 @@ section {
   overflow-y: auto;
 }
 
+.gift-modal-heading {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 12px;
+  padding-right: 46px;
+}
+
+.gift-modal-heading h2 {
+  margin-bottom: 0;
+}
+
+.gift-share-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: fit-content;
+  min-height: 38px;
+  padding: 0 12px;
+  border: 1px solid rgba(255, 226, 164, 0.28);
+  border-radius: 999px;
+  color: #121024;
+  background: linear-gradient(135deg, #fff3bd, #d6b45d 54%, #9a7938);
+  font-size: 0.74rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.gift-share-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.46;
+}
+
 .gift-modal-list {
   display: grid;
   gap: 12px;

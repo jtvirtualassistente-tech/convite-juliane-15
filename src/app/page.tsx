@@ -1,7 +1,16 @@
 "use client";
 
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { CheckCircle2, Gift, MapPin, Plus, Sparkles, Trash2, X } from "lucide-react";
+import {
+  CheckCircle2,
+  Gift,
+  MapPin,
+  Plus,
+  Share2,
+  Sparkles,
+  Trash2,
+  X,
+} from "lucide-react";
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import { type AdminGift } from "@/lib/admin-store";
@@ -143,9 +152,9 @@ function InvitationCard({
           <strong>Cerimonial Palace</strong>
         </div>
 
-        <p className="invite-deadline">Confirme sua presença até 20/08/2026</p>
-
         <InlineCountdown />
+
+        <p className="invite-deadline">Confirme sua presença até 20/08/2026</p>
 
         <p className="invite-hint">Clique nos ícones para interagir</p>
 
@@ -190,6 +199,17 @@ function GiftModal({
   const categories = Object.keys(groupedGifts).sort((a, b) =>
     a.localeCompare(b, "pt-BR"),
   );
+  const markedGifts = useMemo(
+    () => activeGifts.filter((gift) => reminders.includes(gift.id)),
+    [activeGifts, reminders],
+  );
+  const visibleCategoryGifts = selectedCategory
+    ? [...groupedGifts[selectedCategory]].sort((a, b) => {
+        const aMarked = reminders.includes(a.id) ? 0 : 1;
+        const bMarked = reminders.includes(b.id) ? 0 : 1;
+        return aMarked - bMarked || a.name.localeCompare(b.name, "pt-BR");
+      })
+    : [];
 
   useEffect(() => {
     if (!open) return;
@@ -211,6 +231,29 @@ function GiftModal({
   function closeModal() {
     setSelectedCategory(null);
     onClose();
+  }
+
+  async function shareMarkedGifts() {
+    if (markedGifts.length === 0) return;
+
+    const file = await createGiftReminderImage(markedGifts);
+    const shareData = {
+      title: "Presentes escolhidos para Juliane",
+      text: "Lista de presentes marcados como lembrete para a Juliane.",
+      files: [file],
+    };
+
+    if (navigator.canShare?.(shareData)) {
+      await navigator.share(shareData);
+      return;
+    }
+
+    const url = URL.createObjectURL(file);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = file.name;
+    anchor.click();
+    URL.revokeObjectURL(url);
   }
 
   return (
@@ -236,8 +279,21 @@ function GiftModal({
             >
               <X size={18} />
             </button>
-            <span className="section-eyebrow">Sugestões de presentes</span>
-            <h2>{selectedCategory ?? "Lista da Juliane"}</h2>
+            <div className="gift-modal-heading">
+              <div>
+                <span className="section-eyebrow">Sugestões de presentes</span>
+                <h2>{selectedCategory ?? "Lista da Juliane"}</h2>
+              </div>
+              <button
+                className="gift-share-button"
+                disabled={markedGifts.length === 0}
+                onClick={shareMarkedGifts}
+                type="button"
+              >
+                <Share2 size={16} />
+                Compartilhar marcados
+              </button>
+            </div>
             {selectedCategory ? (
               <>
                 <p>Marque os itens que deseja lembrar ao escolher o presente.</p>
@@ -249,7 +305,7 @@ function GiftModal({
                   Voltar para categorias
                 </button>
                 <div className="gift-check-list">
-                  {groupedGifts[selectedCategory].map((gift) => (
+                  {visibleCategoryGifts.map((gift) => (
                     <label className="gift-check-item" key={gift.id}>
                       <input
                         checked={reminders.includes(gift.id)}
@@ -430,7 +486,7 @@ function RsvpModal({
               {sent ? "Enviando..." : "Enviar confirmação"}
             </button>
             <small>
-              Os dados informados serao utilizados exclusivamente para
+              Os dados informados serão utilizados exclusivamente para
               organização e controle de presença deste evento.
             </small>
           </motion.form>
@@ -494,6 +550,122 @@ function SuccessOverlay({
       ) : null}
     </AnimatePresence>
   );
+}
+
+async function createGiftReminderImage(gifts: AdminGift[]) {
+  const width = 1080;
+  const padding = 72;
+  const lineHeight = 42;
+  const categoryGap = 26;
+  const grouped = gifts.reduce<Record<string, AdminGift[]>>((groups, gift) => {
+    const category = gift.category || "Sugestões";
+    groups[category] = [...(groups[category] ?? []), gift];
+    return groups;
+  }, {});
+  const categories = Object.keys(grouped).sort((a, b) => a.localeCompare(b, "pt-BR"));
+  const estimatedLines =
+    8 +
+    categories.reduce((total, category) => total + 2 + grouped[category].length, 0);
+  const height = Math.max(1350, padding * 2 + estimatedLines * lineHeight);
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const context = canvas.getContext("2d");
+
+  if (!context) {
+    throw new Error("Não foi possível gerar a imagem.");
+  }
+
+  const gradient = context.createLinearGradient(0, 0, 0, height);
+  gradient.addColorStop(0, "#06112d");
+  gradient.addColorStop(0.55, "#08183a");
+  gradient.addColorStop(1, "#020713");
+  context.fillStyle = gradient;
+  context.fillRect(0, 0, width, height);
+
+  context.fillStyle = "rgba(255, 232, 167, 0.12)";
+  for (let index = 0; index < 95; index += 1) {
+    const x = (index * 137) % width;
+    const y = (index * 211) % height;
+    const radius = index % 9 === 0 ? 2.5 : 1.2;
+    context.beginPath();
+    context.arc(x, y, radius, 0, Math.PI * 2);
+    context.fill();
+  }
+
+  context.textAlign = "center";
+  context.fillStyle = "#fff8e6";
+  context.font = "700 64px Georgia, serif";
+  context.fillText("Juliane 15 anos", width / 2, 128);
+  context.fillStyle = "#f5dfa0";
+  context.font = "800 36px Arial, sans-serif";
+  context.fillText("Presentes marcados como lembrete", width / 2, 186);
+  context.fillStyle = "rgba(255, 249, 236, 0.78)";
+  context.font = "400 30px Arial, sans-serif";
+  context.fillText("Sugestões escolhidas com carinho para consultar depois", width / 2, 236);
+
+  let y = 322;
+  context.textAlign = "left";
+
+  for (const category of categories) {
+    context.fillStyle = "#f5dfa0";
+    context.font = "800 34px Arial, sans-serif";
+    context.fillText(category, padding, y);
+    y += lineHeight + 8;
+
+    context.fillStyle = "#fff9ec";
+    context.font = "400 32px Arial, sans-serif";
+
+    for (const gift of grouped[category]) {
+      const lines = wrapCanvasText(context, `• ${gift.name}`, width - padding * 2, 32);
+      for (const line of lines) {
+        context.fillText(line, padding + 18, y);
+        y += lineHeight;
+      }
+    }
+
+    y += categoryGap;
+  }
+
+  context.textAlign = "center";
+  context.fillStyle = "rgba(255, 249, 236, 0.7)";
+  context.font = "400 28px Arial, sans-serif";
+  context.fillText("Convite Juliane 15 anos", width / 2, height - 70);
+
+  const blob = await new Promise<Blob>((resolve, reject) => {
+    canvas.toBlob((imageBlob) => {
+      if (imageBlob) resolve(imageBlob);
+      else reject(new Error("Não foi possível gerar a imagem."));
+    }, "image/png");
+  });
+
+  return new File([blob], "presentes-marcados-juliane.png", {
+    type: "image/png",
+  });
+}
+
+function wrapCanvasText(
+  context: CanvasRenderingContext2D,
+  text: string,
+  maxWidth: number,
+  fontSize: number,
+) {
+  const words = text.split(" ");
+  const lines: string[] = [];
+  let line = "";
+
+  for (const word of words) {
+    const testLine = line ? `${line} ${word}` : word;
+    if (context.measureText(testLine).width > maxWidth && line) {
+      lines.push(line);
+      line = word;
+    } else {
+      line = testLine;
+    }
+  }
+
+  if (line) lines.push(line);
+  return lines.map((item) => item.slice(0, Math.max(item.length, fontSize)));
 }
 
 export default function Home() {
