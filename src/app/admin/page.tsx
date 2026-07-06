@@ -20,13 +20,11 @@ import {
   type AdminContent,
   type AdminGift,
   defaultAdminContent,
-  deleteAdminGift,
   getAdminContent,
-  listAdminGifts,
   saveAdminContent,
-  saveAdminGift,
 } from "@/lib/admin-store";
 import { eventInfo } from "@/lib/event";
+import { createGift, listGifts, removeGift } from "@/lib/gift-service";
 import {
   calculateDashboardStats,
   createLocalGuest,
@@ -89,13 +87,18 @@ export default function AdminPage() {
 
   async function loadAdminData() {
     setGuests(listLocalGuests());
-    setGifts(listAdminGifts());
     setContent(getAdminContent());
 
     try {
-      setRsvps(await listOpenRsvps());
+      const [savedRsvps, savedGifts] = await Promise.all([
+        listOpenRsvps(),
+        listGifts(),
+      ]);
+      setRsvps(savedRsvps);
+      setGifts(savedGifts);
     } catch {
       setRsvps([]);
+      setGifts([]);
       setMessage(
         "Firebase ativo: as confirmacoes sao salvas em rsvps. Consulte no Firebase Console enquanto o painel sem login nao usa API administrativa.",
       );
@@ -152,27 +155,41 @@ export default function AdminPage() {
     }
   }
 
-  function handleCreateGift(formData: FormData) {
-    saveAdminGift({
-      name: String(formData.get("name") ?? ""),
-      category: String(formData.get("category") ?? "Outros"),
-      description: String(formData.get("description") ?? ""),
-      imageUrl: String(formData.get("imageUrl") ?? ""),
-      linkUrl: String(formData.get("linkUrl") ?? ""),
-      size: String(formData.get("size") ?? ""),
-      color: String(formData.get("color") ?? ""),
-      notes: String(formData.get("notes") ?? ""),
-      priority: String(formData.get("priority") ?? "Normal"),
-      active: true,
-    });
-    setGifts(listAdminGifts());
-    setMessage("Sugestao de presente adicionada.");
+  async function handleCreateGift(formData: FormData) {
+    setMessage("");
+    setError("");
+
+    try {
+      await createGift({
+        name: String(formData.get("name") ?? ""),
+        category: String(formData.get("category") ?? "Outros"),
+        description: String(formData.get("description") ?? ""),
+        imageUrl: String(formData.get("imageUrl") ?? ""),
+        linkUrl: String(formData.get("linkUrl") ?? ""),
+        size: String(formData.get("size") ?? ""),
+        color: String(formData.get("color") ?? ""),
+        notes: String(formData.get("notes") ?? ""),
+        priority: String(formData.get("priority") ?? "Normal"),
+        active: true,
+      });
+      setGifts(await listGifts());
+      setMessage("Sugestao de presente adicionada.");
+    } catch (reason) {
+      setError(getFriendlyError(reason, "Nao foi possivel salvar o presente."));
+    }
   }
 
-  function handleDeleteGift(id: string) {
-    deleteAdminGift(id);
-    setGifts(listAdminGifts());
-    setMessage("Sugestao removida.");
+  async function handleDeleteGift(id: string) {
+    setMessage("");
+    setError("");
+
+    try {
+      await removeGift(id);
+      setGifts(await listGifts());
+      setMessage("Sugestao removida.");
+    } catch (reason) {
+      setError(getFriendlyError(reason, "Nao foi possivel remover o presente."));
+    }
   }
 
   function handleSaveContent(formData: FormData) {
@@ -521,7 +538,7 @@ function GuestForm({
 function GiftForm({
   handleCreateGift,
 }: {
-  handleCreateGift: (formData: FormData) => void;
+  handleCreateGift: (formData: FormData) => void | Promise<void>;
 }) {
   return (
     <form className="admin-panel route-form" action={handleCreateGift}>

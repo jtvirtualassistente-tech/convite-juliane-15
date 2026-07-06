@@ -4,7 +4,8 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { CheckCircle2, Gift, MapPin, Plus, Sparkles, Trash2, X } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
-import { listAdminGifts, type AdminGift } from "@/lib/admin-store";
+import { type AdminGift } from "@/lib/admin-store";
+import { listGifts } from "@/lib/gift-service";
 import { submitOpenRsvp } from "@/lib/open-rsvp-service";
 
 const eventDate = new Date("2026-09-04T20:00:00-03:00").getTime();
@@ -484,8 +485,12 @@ export default function Home() {
   const [gifts, setGifts] = useState<AdminGift[]>(fallbackGifts);
 
   useEffect(() => {
-    const savedGifts = listAdminGifts().filter((gift) => gift.active);
-    if (savedGifts.length > 0) setGifts(savedGifts);
+    listGifts()
+      .then((savedGifts) => {
+        const activeGifts = savedGifts.filter((gift) => gift.active);
+        if (activeGifts.length > 0) setGifts(activeGifts);
+      })
+      .catch(() => setGifts(fallbackGifts));
   }, []);
 
   return (

@@ -16,6 +16,45 @@ service cloud.firestore {
         && resource.data.eventId == "juliane-15";
     }
 
+    function isValidGift(data) {
+      return data.keys().hasOnly([
+          "eventId",
+          "name",
+          "category",
+          "description",
+          "imageUrl",
+          "linkUrl",
+          "size",
+          "color",
+          "notes",
+          "priority",
+          "active",
+          "createdAt",
+          "updatedAt"
+        ])
+        && data.eventId == "juliane-15"
+        && data.name is string
+        && data.name.size() >= 2
+        && data.name.size() <= 120
+        && data.category is string
+        && data.category.size() <= 80
+        && data.description is string
+        && data.description.size() <= 500
+        && data.imageUrl is string
+        && data.imageUrl.size() <= 500
+        && data.linkUrl is string
+        && data.linkUrl.size() <= 500
+        && data.size is string
+        && data.size.size() <= 80
+        && data.color is string
+        && data.color.size() <= 80
+        && data.notes is string
+        && data.notes.size() <= 500
+        && data.priority is string
+        && data.priority.size() <= 40
+        && data.active is bool;
+    }
+
     match /admins/{uid} {
       allow read: if isAdmin() && request.auth.uid == uid;
       allow write: if false;
@@ -92,8 +131,29 @@ service cloud.firestore {
     }
 
     match /gifts/{document=**} {
-      allow read: if resource.data.active == true || isAdmin();
-      allow write: if isAdmin();
+      allow read: if (
+        resource.data.eventId == "juliane-15"
+        && resource.data.active == true
+      ) || isAdmin();
+      allow create: if isValidGift(request.resource.data);
+      allow update: if resource.data.eventId == "juliane-15"
+        && isValidGift(request.resource.data)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          "eventId",
+          "name",
+          "category",
+          "description",
+          "imageUrl",
+          "linkUrl",
+          "size",
+          "color",
+          "notes",
+          "priority",
+          "active",
+          "createdAt",
+          "updatedAt"
+        ]);
+      allow delete: if false;
     }
 
     match /gallery/{document=**} {
