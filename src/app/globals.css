@@ -87,6 +87,43 @@ main::before {
   animation: starDrift 38s linear infinite;
 }
 
+.stars-layer::before,
+.stars-layer::after {
+  position: absolute;
+  inset: 0;
+  content: "";
+  background-repeat: repeat;
+  mix-blend-mode: screen;
+  opacity: 0.55;
+  animation: pulseStars 4.8s ease-in-out infinite alternate;
+}
+
+.stars-layer::before {
+  background-image:
+    radial-gradient(circle, rgba(255, 255, 255, 0.95) 0 1px, transparent 1.5px),
+    radial-gradient(circle, rgba(255, 225, 160, 0.95) 0 1px, transparent 1.5px);
+  background-position:
+    20px 34px,
+    92px 118px;
+  background-size:
+    160px 160px,
+    230px 230px;
+}
+
+.stars-layer::after {
+  background-image:
+    radial-gradient(circle, rgba(255, 255, 255, 0.8) 0 1px, transparent 1.4px),
+    radial-gradient(circle, rgba(185, 198, 255, 0.75) 0 1px, transparent 1.4px);
+  background-position:
+    72px 88px,
+    144px 42px;
+  background-size:
+    210px 210px,
+    280px 280px;
+  animation-duration: 6.6s;
+  animation-delay: -2.3s;
+}
+
 .shooting-stars-layer {
   position: fixed;
   inset: 0;
@@ -1710,6 +1747,23 @@ section {
     background-position:
       220px 160px,
       260px 240px;
+  }
+}
+
+@keyframes pulseStars {
+  0%,
+  100% {
+    opacity: 0.24;
+    filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.25));
+  }
+
+  45% {
+    opacity: 0.78;
+    filter: drop-shadow(0 0 7px rgba(255, 229, 170, 0.45));
+  }
+
+  70% {
+    opacity: 0.38;
   }
 }
 
