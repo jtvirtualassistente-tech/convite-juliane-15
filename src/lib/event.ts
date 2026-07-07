@@ -6,8 +6,8 @@ export const eventInfo = {
   birthdayPersonName: "Juliane",
   dateLabel: "04 de setembro de 2026",
   eventDateIso: "2026-09-04T20:00:00-03:00",
-  rsvpDeadlineIso: "2026-08-20T23:59:59-03:00",
-  rsvpDeadlineLabel: "20 de agosto de 2026",
+  rsvpDeadlineIso: "2026-07-31T23:59:59-03:00",
+  rsvpDeadlineLabel: "31 de julho de 2026",
   timeLabel: "20h00",
   venueName: "Cerimonial Palace",
   address:

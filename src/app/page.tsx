@@ -154,7 +154,7 @@ function InvitationCard({
 
         <InlineCountdown />
 
-        <p className="invite-deadline">Confirme sua presença até 20/08/2026</p>
+        <p className="invite-deadline">Confirme sua presença até 31/07/2026</p>
 
         <p className="invite-hint">Clique nos ícones para interagir</p>
 
