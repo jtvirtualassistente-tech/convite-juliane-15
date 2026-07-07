@@ -506,7 +506,7 @@ function getFriendlyRsvpError(reason: unknown) {
     return reason.issues
       .map((issue: { path?: Array<string | number>; message?: string }) => {
         if (issue.path?.includes("people")) {
-          return "Informe pelo menos um nome na lista de pessoas ou escolha que não poderá comparecer.";
+          return "Verifique os nomes dos acompanhantes informados.";
         }
         return issue.message ?? "Verifique os dados informados.";
       })

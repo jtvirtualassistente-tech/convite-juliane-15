@@ -21,7 +21,7 @@ export const openRsvpSchema = z.object({
   name: z.string().trim().min(2, "Informe seu nome."),
   phone: phoneSchema.or(z.literal("")).optional().default(""),
   willAttend: z.boolean(),
-  people: z.array(z.string().trim().min(2)).max(300).default([]),
+  people: z.array(z.string().trim()).max(300).default([]),
   reviewed: z.literal(true, {
     errorMap: () => ({ message: "Revise os dados antes de enviar." }),
   }),
