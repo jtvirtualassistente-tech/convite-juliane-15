@@ -9,6 +9,7 @@ import {
   LayoutDashboard,
   Link as LinkIcon,
   LogOut,
+  Mail,
   MessageCircle,
   MonitorSmartphone,
   Plus,
@@ -21,6 +22,7 @@ import {
   UserCheck,
   UserX,
   Users,
+  type LucideIcon,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import {
@@ -33,7 +35,7 @@ import {
 import { eventInfo } from "@/lib/event";
 import { createGift, listGifts, removeGift } from "@/lib/gift-service";
 import { createLocalGuest, listLocalGuests } from "@/lib/guest-service";
-import { listOpenRsvps } from "@/lib/open-rsvp-service";
+import { listOpenRsvps, updateOpenRsvp } from "@/lib/open-rsvp-service";
 import type { Guest, OpenRsvpRecord } from "@/lib/types";
 import { listInviteViews, type InviteViewRecord } from "@/lib/view-service";
 import { ZodError } from "zod";
@@ -84,6 +86,7 @@ export default function AdminPage() {
 
   const confirmedRsvps = rsvps.filter((rsvp) => rsvp.status === "confirmed");
   const declinedRsvps = rsvps.filter((rsvp) => rsvp.status === "declined");
+  const noShowRsvps = rsvps.filter((rsvp) => rsvp.status === "no_show");
   const confirmedPeople = confirmedRsvps.reduce(
     (total, rsvp) => total + rsvp.totalPeople,
     0,
@@ -196,6 +199,27 @@ export default function AdminPage() {
       setMessage("Sugestão removida.");
     } catch (reason) {
       setError(getFriendlyError(reason, "Não foi possível remover o presente."));
+    }
+  }
+
+  async function handleUpdateRsvp(
+    id: string,
+    payload: {
+      name: string;
+      phone: string;
+      people: string[];
+      status: OpenRsvpRecord["status"];
+    },
+  ) {
+    setMessage("");
+    setError("");
+
+    try {
+      await updateOpenRsvp(id, payload);
+      await loadAdminData();
+      setMessage("Confirmação atualizada.");
+    } catch (reason) {
+      setError(getFriendlyError(reason, "Não foi possível atualizar a confirmação."));
     }
   }
 
@@ -361,9 +385,10 @@ Esperamos você sob as estrelas.`;
               confirmedPeople={confirmedPeople}
               confirmedRsvps={confirmedRsvps.length}
               declinedRsvps={declinedRsvps.length}
+              noShowRsvps={noShowRsvps.length}
               views={views}
             />
-            <RsvpPanel rsvps={confirmedRsvps} />
+            <RsvpPanel rsvps={rsvps} />
             <SharePanel
               copyInviteLink={copyInviteLink}
               copyInviteMessage={copyInviteMessage}
@@ -375,16 +400,23 @@ Esperamos você sob as estrelas.`;
         ) : null}
 
         {activeSection === "guests" ? (
-          <div className="admin-two-columns">
-            <GuestsPanel
-              copyInviteLink={copyInviteLink}
-              filteredGuests={filteredGuests}
+          <div className="guests-workspace">
+            <RsvpManagementPanel
+              onUpdate={handleUpdateRsvp}
               query={query}
+              rsvps={rsvps}
               setQuery={setQuery}
               setStatus={setStatus}
               status={status}
             />
-            <GuestForm handleCreateGuest={handleCreateGuest} />
+            <div className="guests-side-panels">
+              <GuestForm handleCreateGuest={handleCreateGuest} />
+              <InviteDeliveryPanel
+                copyInviteLink={copyInviteLink}
+                getInviteLink={getInviteLink}
+                getInviteMessage={getInviteMessage}
+              />
+            </div>
           </div>
         ) : null}
 
@@ -423,11 +455,13 @@ function DashboardPanel({
   confirmedPeople,
   confirmedRsvps,
   declinedRsvps,
+  noShowRsvps,
   views,
 }: {
   confirmedPeople: number;
   confirmedRsvps: number;
   declinedRsvps: number;
+  noShowRsvps: number;
   views: InviteViewRecord[];
 }) {
   const attendancePercent = Math.min(
@@ -478,6 +512,13 @@ function DashboardPanel({
           label="Recusados"
           value={declinedRsvps}
           detail="respostas que não poderão comparecer"
+        />
+        <DashboardCard
+          accent="purple"
+          icon={Users}
+          label="Não compareceu"
+          value={noShowRsvps}
+          detail="marcação administrativa pós-evento"
         />
         <DashboardCard
           accent="gold"
@@ -552,9 +593,9 @@ function DashboardCard({
   label,
   value,
 }: {
-  accent: "blue" | "green" | "red" | "gold";
+  accent: "blue" | "green" | "red" | "gold" | "purple";
   detail: string;
-  icon: typeof Eye;
+  icon: LucideIcon;
   label: string;
   value: number | string;
 }) {
@@ -570,11 +611,20 @@ function DashboardCard({
   );
 }
 
+function getStatusLabel(status: OpenRsvpRecord["status"]) {
+  if (status === "confirmed") return "Presente";
+  if (status === "declined") return "Recusado";
+  return "Não compareceu";
+}
+
 function RsvpPanel({ rsvps }: { rsvps: OpenRsvpRecord[] }) {
   const [search, setSearch] = useState("");
   const rows = useMemo(() => {
     return rsvps.flatMap((rsvp) => {
-      const people = rsvp.people.length > 0 ? rsvp.people : [rsvp.name];
+      const people =
+        rsvp.status === "confirmed" && rsvp.people.length > 0
+          ? rsvp.people
+          : [rsvp.name];
       const isIndividual = people.length === 1;
       const holder = rsvp.name.trim().toLowerCase();
 
@@ -586,6 +636,7 @@ function RsvpPanel({ rsvps }: { rsvps: OpenRsvpRecord[] }) {
           id: `${rsvp.id}-${index}`,
           name: personName,
           holder: isIndividual ? "Individual" : isHolder ? "Titular" : rsvp.name,
+          status: rsvp.status,
           createdAt: rsvp.createdAt,
         };
       });
@@ -599,8 +650,8 @@ function RsvpPanel({ rsvps }: { rsvps: OpenRsvpRecord[] }) {
     <article className="admin-panel rsvp-panel">
       <div className="admin-panel-header">
         <div>
-          <h2>Lista de Confirmados</h2>
-          <p>Uma linha para cada pessoa confirmada no convite.</p>
+          <h2>Lista de Presença</h2>
+          <p>Uma linha para cada pessoa listada no convite.</p>
         </div>
         <label className="confirmed-search">
           <Search size={16} />
@@ -620,12 +671,14 @@ function RsvpPanel({ rsvps }: { rsvps: OpenRsvpRecord[] }) {
             <div className="confirmed-row confirmed-head">
               <span>Nome</span>
               <span>Titular do convite</span>
+              <span>Status</span>
               <span>Data</span>
             </div>
             {filteredRows.map((row) => (
-              <div className="confirmed-row" key={row.id}>
+              <div className={`confirmed-row ${row.status}`} key={row.id}>
                 <strong>{row.name}</strong>
                 <span>{row.holder}</span>
+                <em>{getStatusLabel(row.status)}</em>
                 <span>
                   {row.createdAt
                     ? new Intl.DateTimeFormat("pt-BR").format(new Date(row.createdAt))
@@ -640,32 +693,51 @@ function RsvpPanel({ rsvps }: { rsvps: OpenRsvpRecord[] }) {
   );
 }
 
-function GuestsPanel({
-  filteredGuests,
+function RsvpManagementPanel({
+  onUpdate,
   query,
-  status,
+  rsvps,
   setQuery,
   setStatus,
-  copyInviteLink,
+  status,
 }: {
-  filteredGuests: Guest[];
+  onUpdate: (
+    id: string,
+    payload: {
+      name: string;
+      phone: string;
+      people: string[];
+      status: OpenRsvpRecord["status"];
+    },
+  ) => void | Promise<void>;
   query: string;
-  status: string;
+  rsvps: OpenRsvpRecord[];
   setQuery: (value: string) => void;
   setStatus: (value: string) => void;
-  copyInviteLink: () => void;
+  status: string;
 }) {
+  const filteredRsvps = rsvps.filter((rsvp) => {
+    const matchesQuery = `${rsvp.name} ${rsvp.phone} ${rsvp.people.join(" ")}`
+      .toLowerCase()
+      .includes(query.toLowerCase());
+    const matchesStatus = status === "all" || rsvp.status === status;
+    return matchesQuery && matchesStatus;
+  });
+
   return (
-    <article className="admin-panel">
+    <article className="admin-panel rsvp-management-panel">
       <div className="admin-panel-header">
-        <h2>Convidados</h2>
+        <div>
+          <h2>Convidados</h2>
+          <p>Edite confirmações, vincule acompanhantes e atualize desistências.</p>
+        </div>
         <div className="admin-controls">
           <label>
             <Search size={16} />
             <input
-              aria-label="Buscar convidados"
+              aria-label="Buscar convidados confirmados"
               onChange={(event) => setQuery(event.target.value)}
-              placeholder="Buscar"
+              placeholder="Buscar por nome"
               value={query}
             />
           </label>
@@ -675,29 +747,185 @@ function GuestsPanel({
             value={status}
           >
             <option value="all">Todos</option>
-            <option value="pending">Pendentes</option>
-            <option value="confirmed">Confirmados</option>
+            <option value="confirmed">Presentes</option>
             <option value="declined">Recusados</option>
-            <option value="cancelled">Cancelados</option>
+            <option value="no_show">Não compareceu</option>
           </select>
         </div>
       </div>
-      <div className="admin-table admin-live-table">
-        {filteredGuests.length === 0 ? (
-          <p className="empty-state">Nenhuma pessoa cadastrada.</p>
+
+      <div className="rsvp-editor-list">
+        {filteredRsvps.length === 0 ? (
+          <p className="empty-state">Nenhuma resposta encontrada.</p>
         ) : (
-          filteredGuests.map((guest) => (
-            <div className="admin-row" key={guest.id}>
-              <span>{guest.mainGuestName}</span>
-              <em className={guest.status}>{guest.status}</em>
-              <span>Convite único</span>
-              <button onClick={copyInviteLink} title="Copiar link">
-                <Copy size={15} />
-              </button>
-            </div>
+          filteredRsvps.map((rsvp) => (
+            <RsvpEditorCard key={rsvp.id} onUpdate={onUpdate} rsvp={rsvp} />
           ))
         )}
       </div>
+    </article>
+  );
+}
+
+function RsvpEditorCard({
+  onUpdate,
+  rsvp,
+}: {
+  onUpdate: (
+    id: string,
+    payload: {
+      name: string;
+      phone: string;
+      people: string[];
+      status: OpenRsvpRecord["status"];
+    },
+  ) => void | Promise<void>;
+  rsvp: OpenRsvpRecord;
+}) {
+  const [name, setName] = useState(rsvp.name);
+  const [phone, setPhone] = useState(rsvp.phone ?? "");
+  const [peopleText, setPeopleText] = useState(
+    (rsvp.people.length > 0 ? rsvp.people : [rsvp.name]).join("\n"),
+  );
+  const [nextStatus, setNextStatus] = useState<OpenRsvpRecord["status"]>(
+    rsvp.status,
+  );
+
+  useEffect(() => {
+    setName(rsvp.name);
+    setPhone(rsvp.phone ?? "");
+    setPeopleText((rsvp.people.length > 0 ? rsvp.people : [rsvp.name]).join("\n"));
+    setNextStatus(rsvp.status);
+  }, [rsvp]);
+
+  function submit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    onUpdate(rsvp.id, {
+      name,
+      phone,
+      people: peopleText
+        .split("\n")
+        .map((person) => person.trim())
+        .filter(Boolean),
+      status: nextStatus,
+    });
+  }
+
+  return (
+    <form className={`rsvp-editor-card ${nextStatus}`} onSubmit={submit}>
+      <div className="rsvp-editor-summary">
+        <div>
+          <span>{getStatusLabel(nextStatus)}</span>
+          <strong>{rsvp.name}</strong>
+        </div>
+        <small>{rsvp.totalPeople} pessoa(s)</small>
+      </div>
+
+      <div className="rsvp-editor-fields">
+        <label>
+          Titular
+          <input onChange={(event) => setName(event.target.value)} value={name} />
+        </label>
+        <label>
+          Telefone
+          <input onChange={(event) => setPhone(event.target.value)} value={phone} />
+        </label>
+        <label>
+          Status
+          <select
+            onChange={(event) =>
+              setNextStatus(event.target.value as OpenRsvpRecord["status"])
+            }
+            value={nextStatus}
+          >
+            <option value="confirmed">Presente</option>
+            <option value="declined">Desistência / recusado</option>
+            <option value="no_show">Não compareceu</option>
+          </select>
+        </label>
+      </div>
+
+      <label className="companions-editor">
+        Titular e acompanhantes vinculados
+        <textarea
+          onChange={(event) => setPeopleText(event.target.value)}
+          rows={4}
+          value={peopleText}
+        />
+        <small>Use uma linha para cada pessoa. A primeira linha pode ser o titular.</small>
+      </label>
+
+      <button className="primary-button compact-button" type="submit">
+        Salvar alteração
+      </button>
+    </form>
+  );
+}
+
+function InviteDeliveryPanel({
+  copyInviteLink,
+  getInviteLink,
+  getInviteMessage,
+}: {
+  copyInviteLink: () => void;
+  getInviteLink: () => string;
+  getInviteMessage: () => string;
+}) {
+  const [email, setEmail] = useState("");
+  const [chatPhone, setChatPhone] = useState("");
+  const cleanPhone = chatPhone.replace(/\D/g, "");
+
+  return (
+    <article className="admin-panel route-form delivery-panel">
+      <div className="admin-panel-header">
+        <div>
+          <h2>Envio do link</h2>
+          <p>Envie o convite único por e-mail ou chat.</p>
+        </div>
+        <MessageCircle size={18} />
+      </div>
+      <label>
+        E-mail
+        <input
+          onChange={(event) => setEmail(event.target.value)}
+          placeholder="convidado@email.com"
+          type="email"
+          value={email}
+        />
+      </label>
+      <a
+        className="delivery-button"
+        href={`mailto:${email}?subject=${encodeURIComponent(
+          "Convite Juliane 15 anos",
+        )}&body=${encodeURIComponent(getInviteMessage())}`}
+      >
+        <Mail size={16} />
+        Enviar por e-mail
+      </a>
+      <label>
+        Telefone para chat
+        <input
+          onChange={(event) => setChatPhone(event.target.value)}
+          placeholder="DDD + número"
+          value={chatPhone}
+        />
+      </label>
+      <a
+        className="delivery-button"
+        href={`https://wa.me/${cleanPhone}?text=${encodeURIComponent(
+          getInviteMessage(),
+        )}`}
+        rel="noreferrer"
+        target="_blank"
+      >
+        <MessageCircle size={16} />
+        Enviar por WhatsApp
+      </a>
+      <button className="ghost-button delivery-copy" onClick={copyInviteLink}>
+        <Copy size={16} />
+        Copiar link único
+      </button>
+      <p className="delivery-link">{getInviteLink()}</p>
     </article>
   );
 }

@@ -1,10 +1,28 @@
 "use client";
 
-import { addDoc, collection, getDocs, orderBy, query, serverTimestamp, Timestamp, where } from "firebase/firestore";
+import {
+  addDoc,
+  collection,
+  doc,
+  getDocs,
+  orderBy,
+  query,
+  serverTimestamp,
+  Timestamp,
+  updateDoc,
+  where,
+} from "firebase/firestore";
 import { EVENT_ID, eventInfo } from "@/lib/event";
 import { getFirebaseClients, isFirebaseConfigured } from "@/lib/firebase";
 import type { OpenRsvpPayload, OpenRsvpRecord } from "@/lib/types";
 import { openRsvpSchema } from "@/lib/validation";
+
+export type RsvpAdminUpdate = {
+  name: string;
+  phone: string;
+  people: string[];
+  status: OpenRsvpRecord["status"];
+};
 
 function localKey() {
   return "open-rsvps:juliane-15";
@@ -99,7 +117,12 @@ export async function listOpenRsvps(): Promise<OpenRsvpRecord[]> {
       willAttend: Boolean(data.willAttend),
       people: Array.isArray(data.people) ? data.people.map(String) : [],
       reviewed: true,
-      status: data.status === "declined" ? "declined" : "confirmed",
+      status:
+        data.status === "declined"
+          ? "declined"
+          : data.status === "no_show"
+            ? "no_show"
+            : "confirmed",
       totalPeople: Number(data.totalPeople ?? 0),
       createdAt:
         data.createdAt instanceof Timestamp
@@ -107,4 +130,44 @@ export async function listOpenRsvps(): Promise<OpenRsvpRecord[]> {
           : null,
     };
   });
+}
+
+export async function updateOpenRsvp(id: string, payload: RsvpAdminUpdate) {
+  const people =
+    payload.status === "confirmed"
+      ? payload.people.map((person) => person.trim()).filter(Boolean)
+      : [];
+  const nextPeople =
+    payload.status === "confirmed" && people.length === 0
+      ? [payload.name.trim()]
+      : people;
+  const nextRecord = {
+    name: payload.name.trim(),
+    phone: payload.phone.trim(),
+    willAttend: payload.status === "confirmed",
+    people: nextPeople,
+    status: payload.status,
+    totalPeople: payload.status === "confirmed" ? nextPeople.length : 0,
+  };
+
+  if (!isFirebaseConfigured()) {
+    const records = listLocalOpenRsvps();
+    window.localStorage.setItem(
+      localKey(),
+      JSON.stringify(
+        records.map((record) =>
+          record.id === id
+            ? {
+                ...record,
+                ...nextRecord,
+              }
+            : record,
+        ),
+      ),
+    );
+    return;
+  }
+
+  const { db } = getFirebaseClients();
+  await updateDoc(doc(db, "rsvps", id), nextRecord);
 }

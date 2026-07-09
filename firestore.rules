@@ -117,7 +117,26 @@ service cloud.firestore {
         && request.resource.data.totalPeople <= 300;
 
       allow read: if resource.data.eventId == "juliane-15";
-      allow update, delete: if isAdmin();
+      allow update: if resource.data.eventId == "juliane-15"
+        && request.resource.data.eventId == "juliane-15"
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          "name",
+          "phone",
+          "willAttend",
+          "people",
+          "status",
+          "totalPeople"
+        ])
+        && request.resource.data.name is string
+        && request.resource.data.name.size() >= 2
+        && request.resource.data.phone is string
+        && request.resource.data.phone.size() <= 20
+        && request.resource.data.people is list
+        && request.resource.data.people.size() <= 300
+        && request.resource.data.status in ["confirmed", "declined", "no_show"]
+        && request.resource.data.totalPeople is int
+        && request.resource.data.totalPeople <= 300;
+      allow delete: if isAdmin();
     }
 
     match /content/{document=**} {

@@ -37,7 +37,7 @@ export type OpenRsvpPayload = {
 export type OpenRsvpRecord = OpenRsvpPayload & {
   id: string;
   eventId: string;
-  status: "confirmed" | "declined";
+  status: "confirmed" | "declined" | "no_show";
   totalPeople: number;
   createdAt: string | null;
 };
