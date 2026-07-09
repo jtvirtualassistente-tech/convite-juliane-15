@@ -1900,13 +1900,13 @@ section {
 
 .rsvp-editor-list {
   display: grid;
-  gap: 12px;
+  gap: 10px;
 }
 
 .rsvp-editor-card {
   display: grid;
-  gap: 12px;
-  padding: 14px;
+  gap: 10px;
+  padding: 12px;
   border: 1px solid #dbe4f2;
   border-left-width: 6px;
   border-radius: 8px;
@@ -1931,7 +1931,7 @@ section {
 .rsvp-editor-summary,
 .rsvp-editor-fields {
   display: grid;
-  gap: 10px;
+  gap: 8px;
 }
 
 .rsvp-editor-summary {
@@ -1949,9 +1949,13 @@ section {
 
 .rsvp-editor-summary strong {
   display: block;
-  margin-top: 4px;
+  margin-top: 2px;
   color: #111b31;
-  font-size: 1rem;
+  font-size: 0.98rem;
+  line-height: 1.15;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .rsvp-editor-summary small {
@@ -1963,16 +1967,54 @@ section {
   white-space: nowrap;
 }
 
+.rsvp-editor-actions {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.rsvp-editor-actions button {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border: 1px solid #fecdd3;
+  border-radius: 8px;
+  color: #9b2735;
+  background: #fff;
+}
+
 .rsvp-editor-fields {
   grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.rsvp-editor-card label {
+  gap: 5px;
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+.rsvp-editor-card input,
+.rsvp-editor-card select,
+.rsvp-editor-card textarea {
+  min-height: 40px;
+  padding: 9px 10px;
+  font-size: 0.9rem;
 }
 
 .companions-editor textarea {
   resize: vertical;
 }
 
+.companions-editor small {
+  line-height: 1.25;
+}
+
 .compact-button {
-  min-height: 42px;
+  min-height: 40px;
+  padding: 0 14px;
+  justify-self: end;
+  width: auto;
 }
 
 .delivery-panel {

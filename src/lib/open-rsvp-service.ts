@@ -4,6 +4,7 @@ import {
   addDoc,
   collection,
   doc,
+  deleteDoc,
   getDocs,
   orderBy,
   query,
@@ -170,4 +171,18 @@ export async function updateOpenRsvp(id: string, payload: RsvpAdminUpdate) {
 
   const { db } = getFirebaseClients();
   await updateDoc(doc(db, "rsvps", id), nextRecord);
+}
+
+export async function deleteOpenRsvp(id: string) {
+  if (!isFirebaseConfigured()) {
+    const records = listLocalOpenRsvps();
+    window.localStorage.setItem(
+      localKey(),
+      JSON.stringify(records.filter((record) => record.id !== id)),
+    );
+    return;
+  }
+
+  const { db } = getFirebaseClients();
+  await deleteDoc(doc(db, "rsvps", id));
 }

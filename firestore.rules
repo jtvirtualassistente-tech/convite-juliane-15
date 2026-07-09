@@ -136,7 +136,7 @@ service cloud.firestore {
         && request.resource.data.status in ["confirmed", "declined", "no_show"]
         && request.resource.data.totalPeople is int
         && request.resource.data.totalPeople <= 300;
-      allow delete: if isAdmin();
+      allow delete: if resource.data.eventId == "juliane-15";
     }
 
     match /content/{document=**} {

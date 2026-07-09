@@ -35,7 +35,11 @@ import {
 import { eventInfo } from "@/lib/event";
 import { createGift, listGifts, removeGift } from "@/lib/gift-service";
 import { createLocalGuest, listLocalGuests } from "@/lib/guest-service";
-import { listOpenRsvps, updateOpenRsvp } from "@/lib/open-rsvp-service";
+import {
+  deleteOpenRsvp,
+  listOpenRsvps,
+  updateOpenRsvp,
+} from "@/lib/open-rsvp-service";
 import type { Guest, OpenRsvpRecord } from "@/lib/types";
 import { listInviteViews, type InviteViewRecord } from "@/lib/view-service";
 import { ZodError } from "zod";
@@ -223,6 +227,19 @@ export default function AdminPage() {
     }
   }
 
+  async function handleDeleteRsvp(id: string) {
+    setMessage("");
+    setError("");
+
+    try {
+      await deleteOpenRsvp(id);
+      await loadAdminData();
+      setMessage("Registro excluído.");
+    } catch (reason) {
+      setError(getFriendlyError(reason, "Não foi possível excluir o registro."));
+    }
+  }
+
   function handleSaveContent(formData: FormData) {
     const nextContent: AdminContent = {
       heroTitle: String(formData.get("heroTitle") ?? ""),
@@ -402,6 +419,7 @@ Esperamos você sob as estrelas.`;
         {activeSection === "guests" ? (
           <div className="guests-workspace">
             <RsvpManagementPanel
+              onDelete={handleDeleteRsvp}
               onUpdate={handleUpdateRsvp}
               query={query}
               rsvps={rsvps}
@@ -694,6 +712,7 @@ function RsvpPanel({ rsvps }: { rsvps: OpenRsvpRecord[] }) {
 }
 
 function RsvpManagementPanel({
+  onDelete,
   onUpdate,
   query,
   rsvps,
@@ -701,6 +720,7 @@ function RsvpManagementPanel({
   setStatus,
   status,
 }: {
+  onDelete: (id: string) => void | Promise<void>;
   onUpdate: (
     id: string,
     payload: {
@@ -759,7 +779,12 @@ function RsvpManagementPanel({
           <p className="empty-state">Nenhuma resposta encontrada.</p>
         ) : (
           filteredRsvps.map((rsvp) => (
-            <RsvpEditorCard key={rsvp.id} onUpdate={onUpdate} rsvp={rsvp} />
+            <RsvpEditorCard
+              key={rsvp.id}
+              onDelete={onDelete}
+              onUpdate={onUpdate}
+              rsvp={rsvp}
+            />
           ))
         )}
       </div>
@@ -768,9 +793,11 @@ function RsvpManagementPanel({
 }
 
 function RsvpEditorCard({
+  onDelete,
   onUpdate,
   rsvp,
 }: {
+  onDelete: (id: string) => void | Promise<void>;
   onUpdate: (
     id: string,
     payload: {
@@ -811,6 +838,11 @@ function RsvpEditorCard({
     });
   }
 
+  function deleteRecord() {
+    if (!window.confirm(`Excluir o registro de ${rsvp.name}?`)) return;
+    onDelete(rsvp.id);
+  }
+
   return (
     <form className={`rsvp-editor-card ${nextStatus}`} onSubmit={submit}>
       <div className="rsvp-editor-summary">
@@ -818,7 +850,17 @@ function RsvpEditorCard({
           <span>{getStatusLabel(nextStatus)}</span>
           <strong>{rsvp.name}</strong>
         </div>
-        <small>{rsvp.totalPeople} pessoa(s)</small>
+        <div className="rsvp-editor-actions">
+          <small>{rsvp.totalPeople} pessoa(s)</small>
+          <button
+            aria-label={`Excluir registro de ${rsvp.name}`}
+            onClick={deleteRecord}
+            title="Excluir registro"
+            type="button"
+          >
+            <Trash2 size={15} />
+          </button>
+        </div>
       </div>
 
       <div className="rsvp-editor-fields">
@@ -846,13 +888,13 @@ function RsvpEditorCard({
       </div>
 
       <label className="companions-editor">
-        Titular e acompanhantes vinculados
+        Titular e acompanhantes
         <textarea
           onChange={(event) => setPeopleText(event.target.value)}
-          rows={4}
+          rows={3}
           value={peopleText}
         />
-        <small>Use uma linha para cada pessoa. A primeira linha pode ser o titular.</small>
+        <small>Uma pessoa por linha.</small>
       </label>
 
       <button className="primary-button compact-button" type="submit">
