@@ -156,6 +156,26 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    match /views/{viewId} {
+      allow read: if resource.data.eventId == "juliane-15";
+      allow create, update: if request.resource.data.eventId == "juliane-15"
+        && request.resource.data.keys().hasOnly([
+          "eventId",
+          "visitorId",
+          "deviceType",
+          "userAgent",
+          "createdAt",
+          "lastSeenAt"
+        ])
+        && request.resource.data.visitorId is string
+        && request.resource.data.visitorId.size() >= 8
+        && request.resource.data.visitorId.size() <= 120
+        && request.resource.data.deviceType in ["Celular", "Tablet", "Computador"]
+        && request.resource.data.userAgent is string
+        && request.resource.data.userAgent.size() <= 300;
+      allow delete: if false;
+    }
+
     match /gallery/{document=**} {
       allow read: if resource.data.active == true || isAdmin();
       allow write: if isAdmin();

@@ -1,18 +1,25 @@
 "use client";
 
 import {
+  BarChart3,
   Copy,
   Download,
+  Eye,
   Gift,
   LayoutDashboard,
   Link as LinkIcon,
   LogOut,
   MessageCircle,
+  MonitorSmartphone,
   Plus,
   Save,
   Search,
   Settings,
+  Timer,
   Trash2,
+  TrendingUp,
+  UserCheck,
+  UserX,
   Users,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -25,13 +32,10 @@ import {
 } from "@/lib/admin-store";
 import { eventInfo } from "@/lib/event";
 import { createGift, listGifts, removeGift } from "@/lib/gift-service";
-import {
-  calculateDashboardStats,
-  createLocalGuest,
-  listLocalGuests,
-} from "@/lib/guest-service";
+import { createLocalGuest, listLocalGuests } from "@/lib/guest-service";
 import { listOpenRsvps } from "@/lib/open-rsvp-service";
 import type { Guest, OpenRsvpRecord } from "@/lib/types";
+import { listInviteViews, type InviteViewRecord } from "@/lib/view-service";
 import { ZodError } from "zod";
 
 type AdminSection = "dashboard" | "guests" | "gifts" | "settings";
@@ -50,6 +54,7 @@ export default function AdminPage() {
   const [activeSection, setActiveSection] = useState<AdminSection>("dashboard");
   const [guests, setGuests] = useState<Guest[]>([]);
   const [rsvps, setRsvps] = useState<OpenRsvpRecord[]>([]);
+  const [views, setViews] = useState<InviteViewRecord[]>([]);
   const [gifts, setGifts] = useState<AdminGift[]>([]);
   const [content, setContent] = useState<AdminContent>(defaultAdminContent());
   const [query, setQuery] = useState("");
@@ -77,7 +82,6 @@ export default function AdminPage() {
     });
   }, [guests, query, status]);
 
-  const guestStats = calculateDashboardStats(guests);
   const confirmedRsvps = rsvps.filter((rsvp) => rsvp.status === "confirmed");
   const declinedRsvps = rsvps.filter((rsvp) => rsvp.status === "declined");
   const confirmedPeople = confirmedRsvps.reduce(
@@ -90,15 +94,18 @@ export default function AdminPage() {
     setContent(getAdminContent());
 
     try {
-      const [savedRsvps, savedGifts] = await Promise.all([
+      const [savedRsvps, savedGifts, savedViews] = await Promise.all([
         listOpenRsvps(),
         listGifts(),
+        listInviteViews(),
       ]);
       setRsvps(savedRsvps);
       setGifts(savedGifts);
+      setViews(savedViews);
     } catch {
       setRsvps([]);
       setGifts([]);
+      setViews([]);
       setMessage(
         "Firebase ativo: as confirmações são salvas em rsvps. Consulte no Firebase Console enquanto o painel sem login não usa API administrativa.",
       );
@@ -350,22 +357,13 @@ Esperamos você sob as estrelas.`;
 
         {activeSection === "dashboard" ? (
           <>
-            <div className="admin-metrics">
-              {[
-                ["Lista controle", guestStats.totalGuests],
-                ["Confirmacoes", confirmedRsvps.length],
-                ["Recusados", declinedRsvps.length],
-                ["Pessoas", confirmedPeople],
-                ["Presentes", gifts.length],
-                ["Prazo", eventInfo.rsvpDeadlineLabel],
-              ].map(([label, value]) => (
-                <article key={label}>
-                  <span>{label}</span>
-                  <strong>{value}</strong>
-                </article>
-              ))}
-            </div>
-            <RsvpPanel rsvps={rsvps} />
+            <DashboardPanel
+              confirmedPeople={confirmedPeople}
+              confirmedRsvps={confirmedRsvps.length}
+              declinedRsvps={declinedRsvps.length}
+              views={views}
+            />
+            <RsvpPanel rsvps={confirmedRsvps} />
             <SharePanel
               copyInviteLink={copyInviteLink}
               copyInviteMessage={copyInviteMessage}
@@ -413,30 +411,229 @@ function getFriendlyError(reason: unknown, fallback: string) {
   return reason instanceof Error ? reason.message : fallback;
 }
 
+const totalCapacity = 100;
+
+function getDaysToDeadline() {
+  const deadline = new Date(eventInfo.rsvpDeadlineIso).getTime();
+  const now = Date.now();
+  return Math.max(0, Math.ceil((deadline - now) / 86_400_000));
+}
+
+function DashboardPanel({
+  confirmedPeople,
+  confirmedRsvps,
+  declinedRsvps,
+  views,
+}: {
+  confirmedPeople: number;
+  confirmedRsvps: number;
+  declinedRsvps: number;
+  views: InviteViewRecord[];
+}) {
+  const attendancePercent = Math.min(
+    100,
+    Math.round((confirmedPeople / totalCapacity) * 100),
+  );
+  const remaining = Math.max(totalCapacity - confirmedPeople, 0);
+  const daysToDeadline = getDaysToDeadline();
+  const deviceStats = {
+    Celular: views.filter((view) => view.deviceType === "Celular").length,
+    Computador: views.filter((view) => view.deviceType === "Computador").length,
+    Tablet: views.filter((view) => view.deviceType === "Tablet").length,
+  };
+  const maxDeviceViews = Math.max(1, ...Object.values(deviceStats));
+
+  return (
+    <section className="power-dashboard" aria-label="Resumo do convite">
+      <div className="dashboard-title">
+        <div>
+          <span className="section-eyebrow">Estatísticas</span>
+          <h2>Dashboard do Convite</h2>
+          <p>Resumo das respostas, alcance do link e ocupação prevista.</p>
+        </div>
+        <div className="dashboard-deadline">
+          <Timer size={18} />
+          <span>{daysToDeadline} dias para confirmar</span>
+        </div>
+      </div>
+
+      <div className="dashboard-kpis">
+        <DashboardCard
+          accent="blue"
+          icon={Eye}
+          label="Visualizações"
+          value={views.length}
+          detail="únicas por navegador/aparelho"
+        />
+        <DashboardCard
+          accent="green"
+          icon={UserCheck}
+          label="Confirmou Presença"
+          value={confirmedRsvps}
+          detail={`${confirmedPeople} pessoa(s) confirmada(s)`}
+        />
+        <DashboardCard
+          accent="red"
+          icon={UserX}
+          label="Recusados"
+          value={declinedRsvps}
+          detail="respostas que não poderão comparecer"
+        />
+        <DashboardCard
+          accent="gold"
+          icon={TrendingUp}
+          label="Ocupação"
+          value={`${attendancePercent}%`}
+          detail={`${confirmedPeople} de ${totalCapacity} pessoas`}
+        />
+      </div>
+
+      <div className="dashboard-analytics">
+        <article className="dashboard-chart-card">
+          <div className="chart-card-header">
+            <div>
+              <span>Capacidade total</span>
+              <strong>{confirmedPeople}/{totalCapacity}</strong>
+            </div>
+            <BarChart3 size={22} />
+          </div>
+          <div className="capacity-meter">
+            <div style={{ width: `${attendancePercent}%` }} />
+          </div>
+          <div className="capacity-legend">
+            <span>{confirmedPeople} confirmados</span>
+            <span>{remaining} vagas restantes</span>
+          </div>
+        </article>
+
+        <article className="dashboard-chart-card">
+          <div className="chart-card-header">
+            <div>
+              <span>Visualizações por aparelho</span>
+              <strong>{views.length} acesso(s) único(s)</strong>
+            </div>
+            <MonitorSmartphone size={22} />
+          </div>
+          <div className="device-bars">
+            {Object.entries(deviceStats).map(([device, amount]) => (
+              <div className="device-bar-row" key={device}>
+                <span>{device}</span>
+                <div>
+                  <i style={{ width: `${(amount / maxDeviceViews) * 100}%` }} />
+                </div>
+                <strong>{amount}</strong>
+              </div>
+            ))}
+          </div>
+        </article>
+
+        <article className="dashboard-chart-card deadline-card">
+          <div className="chart-card-header">
+            <div>
+              <span>Prazo de confirmação</span>
+              <strong>{eventInfo.rsvpDeadlineLabel}</strong>
+            </div>
+            <Timer size={22} />
+          </div>
+          <p>
+            Acompanhe as confirmações até o prazo e mantenha a lista final perto
+            do limite de {totalCapacity} pessoas.
+          </p>
+        </article>
+      </div>
+    </section>
+  );
+}
+
+function DashboardCard({
+  accent,
+  detail,
+  icon: Icon,
+  label,
+  value,
+}: {
+  accent: "blue" | "green" | "red" | "gold";
+  detail: string;
+  icon: typeof Eye;
+  label: string;
+  value: number | string;
+}) {
+  return (
+    <article className={`dashboard-kpi ${accent}`}>
+      <div>
+        <span>{label}</span>
+        <strong>{value}</strong>
+        <small>{detail}</small>
+      </div>
+      <Icon size={24} />
+    </article>
+  );
+}
+
 function RsvpPanel({ rsvps }: { rsvps: OpenRsvpRecord[] }) {
+  const [search, setSearch] = useState("");
+  const rows = useMemo(() => {
+    return rsvps.flatMap((rsvp) => {
+      const people = rsvp.people.length > 0 ? rsvp.people : [rsvp.name];
+      const isIndividual = people.length === 1;
+      const holder = rsvp.name.trim().toLowerCase();
+
+      return people.map((person, index) => {
+        const personName = person.trim() || rsvp.name;
+        const isHolder = personName.trim().toLowerCase() === holder;
+
+        return {
+          id: `${rsvp.id}-${index}`,
+          name: personName,
+          holder: isIndividual ? "Individual" : isHolder ? "Titular" : rsvp.name,
+          createdAt: rsvp.createdAt,
+        };
+      });
+    });
+  }, [rsvps]);
+  const filteredRows = rows.filter((row) =>
+    `${row.name} ${row.holder}`.toLowerCase().includes(search.toLowerCase()),
+  );
+
   return (
     <article className="admin-panel rsvp-panel">
       <div className="admin-panel-header">
         <div>
-          <h2>Confirmacoes recebidas</h2>
-          <p>Respostas enviadas pelo link único do convite.</p>
+          <h2>Lista de Confirmados</h2>
+          <p>Uma linha para cada pessoa confirmada no convite.</p>
         </div>
+        <label className="confirmed-search">
+          <Search size={16} />
+          <input
+            aria-label="Filtrar nomes confirmados"
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="Filtrar por nome"
+            value={search}
+          />
+        </label>
       </div>
-      <div className="rsvp-list">
-        {rsvps.length === 0 ? (
+      <div className="confirmed-table">
+        {filteredRows.length === 0 ? (
           <p className="empty-state">Nenhuma confirmação recebida ainda.</p>
         ) : (
-          rsvps.map((rsvp) => (
-            <div className="rsvp-card" key={rsvp.id}>
-              <div>
-                <strong>{rsvp.name}</strong>
-                <span>{rsvp.phone}</span>
-              </div>
-              <em className={rsvp.status}>{rsvp.status}</em>
-              <p>{rsvp.people.join(", ") || "Não comparecerá"}</p>
-              <small>{rsvp.totalPeople} pessoa(s)</small>
+          <>
+            <div className="confirmed-row confirmed-head">
+              <span>Nome</span>
+              <span>Titular do convite</span>
+              <span>Data</span>
             </div>
-          ))
+            {filteredRows.map((row) => (
+              <div className="confirmed-row" key={row.id}>
+                <strong>{row.name}</strong>
+                <span>{row.holder}</span>
+                <span>
+                  {row.createdAt
+                    ? new Intl.DateTimeFormat("pt-BR").format(new Date(row.createdAt))
+                    : "-"}
+                </span>
+              </div>
+            ))}
+          </>
         )}
       </div>
     </article>

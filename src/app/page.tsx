@@ -17,6 +17,7 @@ import { type AdminGift } from "@/lib/admin-store";
 import { defaultGiftSuggestions } from "@/lib/gift-catalog";
 import { listGifts } from "@/lib/gift-service";
 import { submitOpenRsvp } from "@/lib/open-rsvp-service";
+import { trackInviteView } from "@/lib/view-service";
 
 const eventDate = new Date("2026-09-04T20:00:00-03:00").getTime();
 const mapsUrl = "https://maps.app.goo.gl/DxDRcY8edMxiECuA6";
@@ -676,6 +677,8 @@ export default function Home() {
   const [gifts, setGifts] = useState<AdminGift[]>(fallbackGifts);
 
   useEffect(() => {
+    trackInviteView().catch(() => undefined);
+
     listGifts()
       .then((savedGifts) => {
         const activeGifts = savedGifts.filter((gift) => gift.active);
