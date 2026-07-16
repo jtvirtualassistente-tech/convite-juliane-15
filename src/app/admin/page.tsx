@@ -92,7 +92,7 @@ export default function AdminPage() {
   const declinedRsvps = rsvps.filter((rsvp) => rsvp.status === "declined");
   const noShowRsvps = rsvps.filter((rsvp) => rsvp.status === "no_show");
   const confirmedPeople = confirmedRsvps.reduce(
-    (total, rsvp) => total + rsvp.totalPeople,
+    (total, rsvp) => total + getRsvpListedPeople(rsvp).length,
     0,
   );
 
@@ -262,18 +262,20 @@ export default function AdminPage() {
   function exportCsv() {
     const header = "tipo,nome,telefone,status,total_pessoas,pessoas\n";
     const rsvpRows = rsvps
-      .map((rsvp) =>
-        [
+      .map((rsvp) => {
+        const listedPeople = getRsvpListedPeople(rsvp);
+
+        return [
           "confirmação",
           rsvp.name,
           rsvp.phone,
           rsvp.status,
-          rsvp.totalPeople,
-          rsvp.people.join("|"),
+          rsvp.status === "confirmed" ? listedPeople.length : 0,
+          listedPeople.join("|"),
         ]
           .map((value) => `"${String(value).replaceAll('"', '""')}"`)
-          .join(","),
-      )
+          .join(",");
+      })
       .join("\n");
     const guestRows = filteredGuests
       .map((guest) =>
@@ -635,20 +637,40 @@ function getStatusLabel(status: OpenRsvpRecord["status"]) {
   return "Não compareceu";
 }
 
+function getComparableName(name: string) {
+  return name.trim().toLowerCase();
+}
+
+function getRsvpListedPeople(rsvp: OpenRsvpRecord) {
+  const holderName = rsvp.name.trim();
+
+  if (rsvp.status !== "confirmed") {
+    return holderName ? [holderName] : [];
+  }
+
+  const listedPeople = rsvp.people.map((person) => person.trim()).filter(Boolean);
+  const people = holderName ? [holderName, ...listedPeople] : listedPeople;
+  const seen = new Set<string>();
+
+  return people.filter((person) => {
+    const comparable = getComparableName(person);
+    if (!comparable || seen.has(comparable)) return false;
+    seen.add(comparable);
+    return true;
+  });
+}
+
 function RsvpPanel({ rsvps }: { rsvps: OpenRsvpRecord[] }) {
   const [search, setSearch] = useState("");
   const rows = useMemo(() => {
     return rsvps.flatMap((rsvp) => {
-      const people =
-        rsvp.status === "confirmed" && rsvp.people.length > 0
-          ? rsvp.people
-          : [rsvp.name];
+      const people = getRsvpListedPeople(rsvp);
       const isIndividual = people.length === 1;
-      const holder = rsvp.name.trim().toLowerCase();
+      const holder = getComparableName(rsvp.name);
 
       return people.map((person, index) => {
         const personName = person.trim() || rsvp.name;
-        const isHolder = personName.trim().toLowerCase() === holder;
+        const isHolder = getComparableName(personName) === holder;
 
         return {
           id: `${rsvp.id}-${index}`,
@@ -812,7 +834,7 @@ function RsvpEditorCard({
   const [name, setName] = useState(rsvp.name);
   const [phone, setPhone] = useState(rsvp.phone ?? "");
   const [peopleText, setPeopleText] = useState(
-    (rsvp.people.length > 0 ? rsvp.people : [rsvp.name]).join("\n"),
+    getRsvpListedPeople(rsvp).join("\n"),
   );
   const [nextStatus, setNextStatus] = useState<OpenRsvpRecord["status"]>(
     rsvp.status,
@@ -821,7 +843,7 @@ function RsvpEditorCard({
   useEffect(() => {
     setName(rsvp.name);
     setPhone(rsvp.phone ?? "");
-    setPeopleText((rsvp.people.length > 0 ? rsvp.people : [rsvp.name]).join("\n"));
+    setPeopleText(getRsvpListedPeople(rsvp).join("\n"));
     setNextStatus(rsvp.status);
   }, [rsvp]);
 
@@ -851,7 +873,9 @@ function RsvpEditorCard({
           <strong>{rsvp.name}</strong>
         </div>
         <div className="rsvp-editor-actions">
-          <small>{rsvp.totalPeople} pessoa(s)</small>
+          <small>
+            {rsvp.status === "confirmed" ? getRsvpListedPeople(rsvp).length : 0} pessoa(s)
+          </small>
           <button
             aria-label={`Excluir registro de ${rsvp.name}`}
             onClick={deleteRecord}

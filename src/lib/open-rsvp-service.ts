@@ -37,6 +37,18 @@ function normalizePeople(payload: OpenRsvpPayload) {
   return people.length > 0 ? people : payload.willAttend ? [payload.name.trim()] : [];
 }
 
+function normalizeAdminPeople(name: string, people: string[]) {
+  const holderName = name.trim();
+  const seen = new Set<string>();
+
+  return [holderName, ...people.map((person) => person.trim())].filter((person) => {
+    const comparable = person.toLowerCase();
+    if (!comparable || seen.has(comparable)) return false;
+    seen.add(comparable);
+    return true;
+  });
+}
+
 export async function submitOpenRsvp(payload: OpenRsvpPayload) {
   const parsed = openRsvpSchema.parse(payload);
   const deadline = new Date(eventInfo.rsvpDeadlineIso).getTime();
@@ -134,14 +146,10 @@ export async function listOpenRsvps(): Promise<OpenRsvpRecord[]> {
 }
 
 export async function updateOpenRsvp(id: string, payload: RsvpAdminUpdate) {
-  const people =
-    payload.status === "confirmed"
-      ? payload.people.map((person) => person.trim()).filter(Boolean)
-      : [];
   const nextPeople =
-    payload.status === "confirmed" && people.length === 0
-      ? [payload.name.trim()]
-      : people;
+    payload.status === "confirmed"
+      ? normalizeAdminPeople(payload.name, payload.people)
+      : [];
   const nextRecord = {
     name: payload.name.trim(),
     phone: payload.phone.trim(),
