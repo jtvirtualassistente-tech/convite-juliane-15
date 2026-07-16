@@ -7,3 +7,6 @@ dist
 firebase-debug.log
 firestore-debug.log
 *.tsbuildinfo
+
+.vercel
+.env*
