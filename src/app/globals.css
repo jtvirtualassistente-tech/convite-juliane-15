@@ -1557,6 +1557,27 @@ section {
   white-space: nowrap;
 }
 
+.dashboard-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.report-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 12px;
+  border: 1px solid #dbe4f2;
+  border-radius: 8px;
+  color: #111b31;
+  background: #fff;
+  font-size: 0.84rem;
+  font-weight: 900;
+}
+
 .dashboard-kpis {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -1948,7 +1969,7 @@ section {
 }
 
 .rsvp-management-panel .admin-controls {
-  width: min(620px, 100%);
+  width: min(760px, 100%);
 }
 
 .rsvp-editor-list {
@@ -1965,6 +1986,7 @@ section {
   border-left-width: 6px;
   border-radius: 8px;
   background: #fff;
+  box-shadow: 0 10px 24px rgba(15, 25, 48, 0.04);
 }
 
 .rsvp-editor-card.confirmed {
@@ -1991,6 +2013,15 @@ section {
 .rsvp-editor-summary {
   grid-template-columns: 1fr auto;
   align-items: center;
+}
+
+.rsvp-editor-title-box,
+.rsvp-field-box {
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid #dbe4f2;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.72);
 }
 
 .rsvp-editor-summary span,
@@ -2039,7 +2070,7 @@ section {
 }
 
 .rsvp-editor-fields {
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  grid-template-columns: minmax(190px, 1.1fr) minmax(150px, 0.8fr) minmax(160px, 0.8fr);
 }
 
 .rsvp-editor-card label {
@@ -2636,8 +2667,8 @@ section {
   }
 
   .admin-controls {
-    grid-template-columns: 1fr 180px;
-    width: min(520px, 100%);
+    grid-template-columns: minmax(220px, 1fr) minmax(150px, 0.6fr) minmax(160px, 0.7fr);
+    width: min(760px, 100%);
   }
 }
 

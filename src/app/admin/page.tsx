@@ -5,6 +5,7 @@ import {
   Copy,
   Download,
   Eye,
+  FileText,
   Gift,
   LayoutDashboard,
   Link as LinkIcon,
@@ -34,8 +35,9 @@ import {
 } from "@/lib/admin-store";
 import { eventInfo } from "@/lib/event";
 import { createGift, listGifts, removeGift } from "@/lib/gift-service";
-import { createLocalGuest, listLocalGuests } from "@/lib/guest-service";
+import { listLocalGuests } from "@/lib/guest-service";
 import {
+  createOpenRsvpFromAdmin,
   deleteOpenRsvp,
   listOpenRsvps,
   updateOpenRsvp,
@@ -153,16 +155,16 @@ export default function AdminPage() {
     setError("");
 
     try {
-      createLocalGuest({
-        mainGuestName: String(formData.get("name") ?? ""),
+      await createOpenRsvpFromAdmin({
+        name: String(formData.get("name") ?? ""),
         phone: String(formData.get("phone") ?? ""),
-        maxCompanions: 999,
-        active: true,
-        notes: String(formData.get("notes") ?? ""),
-        origin: "admin-code",
+        companions: String(formData.get("companions") ?? "")
+          .split("\n")
+          .map((person) => person.trim())
+          .filter(Boolean),
       });
 
-      setMessage("Pessoa adicionada a lista.");
+      setMessage("Pessoa adicionada à lista de presença.");
       await loadAdminData();
     } catch (reason) {
       setError(getFriendlyError(reason, "Não foi possível cadastrar a pessoa."));
@@ -294,6 +296,88 @@ export default function AdminPage() {
     URL.revokeObjectURL(url);
   }
 
+  function generatePresencePdf() {
+    const rows = rsvps.flatMap((rsvp) =>
+      getRsvpListedPeople(rsvp).map((person) => ({
+        name: person,
+        holder:
+          getRsvpListedPeople(rsvp).length === 1
+            ? "Individual"
+            : getComparableName(person) === getComparableName(rsvp.name)
+              ? "Titular"
+              : rsvp.name,
+        status: getStatusLabel(rsvp.status),
+        date: rsvp.createdAt
+          ? new Intl.DateTimeFormat("pt-BR").format(new Date(rsvp.createdAt))
+          : "-",
+      })),
+    );
+    const sortedRows = rows.sort((firstRow, secondRow) =>
+      firstRow.name.localeCompare(secondRow.name, "pt-BR", { sensitivity: "base" }),
+    );
+    const printable = window.open("", "_blank", "width=1024,height=768");
+    if (!printable) {
+      setError("Não foi possível abrir o relatório. Libere pop-ups para gerar o PDF.");
+      return;
+    }
+
+    printable.document.write(`<!doctype html>
+      <html lang="pt-BR">
+        <head>
+          <meta charset="utf-8" />
+          <title>Relatório de presença - Juliane 15 anos</title>
+          <style>
+            body { font-family: Arial, sans-serif; color: #111827; margin: 32px; }
+            h1 { margin: 0 0 4px; font-size: 28px; }
+            p { margin: 0 0 18px; color: #4b5563; }
+            table { width: 100%; border-collapse: collapse; font-size: 12px; }
+            th { text-align: left; background: #f3f4f6; }
+            th, td { border: 1px solid #d1d5db; padding: 8px; }
+            .summary { display: flex; gap: 12px; margin: 18px 0; }
+            .summary div { border: 1px solid #d1d5db; padding: 10px; border-radius: 6px; }
+            @media print { body { margin: 18mm; } button { display: none; } }
+          </style>
+        </head>
+        <body>
+          <button onclick="window.print()">Salvar como PDF</button>
+          <h1>Relatório de presença</h1>
+          <p>Juliane 15 anos - Gerado em ${new Intl.DateTimeFormat("pt-BR", {
+            dateStyle: "short",
+            timeStyle: "short",
+          }).format(new Date())}</p>
+          <div class="summary">
+            <div><strong>${confirmedPeople}</strong><br />Pessoas confirmadas</div>
+            <div><strong>${declinedRsvps.length}</strong><br />Recusados</div>
+            <div><strong>${noShowRsvps.length}</strong><br />Não compareceu</div>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>Nome</th>
+                <th>Titular do convite</th>
+                <th>Status</th>
+                <th>Data</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${sortedRows
+                .map(
+                  (row) => `<tr>
+                    <td>${escapeHtml(row.name)}</td>
+                    <td>${escapeHtml(row.holder)}</td>
+                    <td>${escapeHtml(row.status)}</td>
+                    <td>${escapeHtml(row.date)}</td>
+                  </tr>`,
+                )
+                .join("")}
+            </tbody>
+          </table>
+        </body>
+      </html>`);
+    printable.document.close();
+    printable.focus();
+  }
+
   function getInviteLink() {
     return `${window.location.origin}/convite?cartao=1`;
   }
@@ -404,6 +488,7 @@ Esperamos você sob as estrelas.`;
               confirmedPeople={confirmedPeople}
               confirmedRsvps={confirmedRsvps.length}
               declinedRsvps={declinedRsvps.length}
+              generatePresencePdf={generatePresencePdf}
               noShowRsvps={noShowRsvps.length}
               views={views}
             />
@@ -463,6 +548,15 @@ function getFriendlyError(reason: unknown, fallback: string) {
   return reason instanceof Error ? reason.message : fallback;
 }
 
+function escapeHtml(value: string) {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
 const totalCapacity = 100;
 
 function getDaysToDeadline() {
@@ -475,12 +569,14 @@ function DashboardPanel({
   confirmedPeople,
   confirmedRsvps,
   declinedRsvps,
+  generatePresencePdf,
   noShowRsvps,
   views,
 }: {
   confirmedPeople: number;
   confirmedRsvps: number;
   declinedRsvps: number;
+  generatePresencePdf: () => void;
   noShowRsvps: number;
   views: InviteViewRecord[];
 }) {
@@ -505,9 +601,15 @@ function DashboardPanel({
           <h2>Dashboard do Convite</h2>
           <p>Resumo das respostas, alcance do link e ocupação prevista.</p>
         </div>
-        <div className="dashboard-deadline">
-          <Timer size={18} />
-          <span>{daysToDeadline} dias para confirmar</span>
+        <div className="dashboard-actions">
+          <button className="report-button" onClick={generatePresencePdf}>
+            <FileText size={17} />
+            Gerar PDF
+          </button>
+          <div className="dashboard-deadline">
+            <Timer size={18} />
+            <span>{daysToDeadline} dias para confirmar</span>
+          </div>
         </div>
       </div>
 
@@ -812,13 +914,32 @@ function RsvpManagementPanel({
   setStatus: (value: string) => void;
   status: string;
 }) {
-  const filteredRsvps = rsvps.filter((rsvp) => {
-    const matchesQuery = `${rsvp.name} ${rsvp.phone} ${rsvp.people.join(" ")}`
-      .toLowerCase()
-      .includes(query.toLowerCase());
-    const matchesStatus = status === "all" || rsvp.status === status;
-    return matchesQuery && matchesStatus;
-  });
+  const [cardFilter, setCardFilter] = useState<"recent" | "az" | "mostPeople">(
+    "recent",
+  );
+  const filteredRsvps = rsvps
+    .filter((rsvp) => {
+      const matchesQuery = `${rsvp.name} ${rsvp.phone} ${rsvp.people.join(" ")}`
+        .toLowerCase()
+        .includes(query.toLowerCase());
+      const matchesStatus = status === "all" || rsvp.status === status;
+      return matchesQuery && matchesStatus;
+    })
+    .sort((firstRsvp, secondRsvp) => {
+      if (cardFilter === "az") {
+        return firstRsvp.name.localeCompare(secondRsvp.name, "pt-BR", {
+          sensitivity: "base",
+        });
+      }
+
+      if (cardFilter === "mostPeople") {
+        return (
+          getRsvpListedPeople(secondRsvp).length - getRsvpListedPeople(firstRsvp).length
+        );
+      }
+
+      return 0;
+    });
 
   return (
     <article className="admin-panel rsvp-management-panel">
@@ -846,6 +967,17 @@ function RsvpManagementPanel({
             <option value="confirmed">Presentes</option>
             <option value="declined">Recusados</option>
             <option value="no_show">Não compareceu</option>
+          </select>
+          <select
+            aria-label="Ordenar cards"
+            onChange={(event) =>
+              setCardFilter(event.target.value as "recent" | "az" | "mostPeople")
+            }
+            value={cardFilter}
+          >
+            <option value="recent">Mais recentes</option>
+            <option value="az">Ordem alfabética</option>
+            <option value="mostPeople">Mais pessoas</option>
           </select>
         </div>
       </div>
@@ -922,7 +1054,7 @@ function RsvpEditorCard({
   return (
     <form className={`rsvp-editor-card ${nextStatus}`} onSubmit={submit}>
       <div className="rsvp-editor-summary">
-        <div>
+        <div className="rsvp-editor-title-box">
           <span>{getStatusLabel(nextStatus)}</span>
           <strong>{rsvp.name}</strong>
         </div>
@@ -942,15 +1074,15 @@ function RsvpEditorCard({
       </div>
 
       <div className="rsvp-editor-fields">
-        <label>
+        <label className="rsvp-field-box">
           Titular
           <input onChange={(event) => setName(event.target.value)} value={name} />
         </label>
-        <label>
+        <label className="rsvp-field-box">
           Telefone
           <input onChange={(event) => setPhone(event.target.value)} value={phone} />
         </label>
-        <label>
+        <label className="rsvp-field-box">
           Status
           <select
             onChange={(event) =>
@@ -965,7 +1097,7 @@ function RsvpEditorCard({
         </label>
       </div>
 
-      <label className="companions-editor">
+      <label className="companions-editor rsvp-field-box">
         Titular e acompanhantes
         <textarea
           onChange={(event) => setPeopleText(event.target.value)}
@@ -1058,23 +1190,27 @@ function GuestForm({
   return (
     <form className="admin-panel route-form" action={handleCreateGuest}>
       <div className="admin-panel-header">
-        <h2>Adicionar pessoa</h2>
+        <h2>Adicionar convite</h2>
         <Plus size={18} />
       </div>
       <label>
-        Nome
-        <input name="name" required />
+        Titular
+        <input name="name" placeholder="Nome do titular" required />
       </label>
       <label>
         Telefone
-        <input name="phone" />
+        <input name="phone" placeholder="Opcional" />
       </label>
       <label>
-        Observacoes
-        <input name="notes" />
+        Acompanhantes
+        <textarea
+          name="companions"
+          placeholder="Digite um acompanhante por linha"
+          rows={5}
+        />
       </label>
       <button className="primary-button" type="submit">
-        Adicionar pessoa
+        Incluir titular e acompanhantes
       </button>
     </form>
   );

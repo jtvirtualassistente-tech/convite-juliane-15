@@ -25,6 +25,12 @@ export type RsvpAdminUpdate = {
   status: OpenRsvpRecord["status"];
 };
 
+export type RsvpAdminCreate = {
+  name: string;
+  phone: string;
+  companions: string[];
+};
+
 function localKey() {
   return "open-rsvps:juliane-15";
 }
@@ -179,6 +185,42 @@ export async function updateOpenRsvp(id: string, payload: RsvpAdminUpdate) {
 
   const { db } = getFirebaseClients();
   await updateDoc(doc(db, "rsvps", id), nextRecord);
+}
+
+export async function createOpenRsvpFromAdmin(payload: RsvpAdminCreate) {
+  const people = normalizeAdminPeople(payload.name, payload.companions);
+  const record: OpenRsvpRecord = {
+    id: `local-${Date.now()}`,
+    eventId: EVENT_ID,
+    name: payload.name.trim(),
+    phone: payload.phone.trim(),
+    willAttend: true,
+    people,
+    reviewed: true,
+    status: "confirmed",
+    totalPeople: people.length,
+    createdAt: new Date().toISOString(),
+  };
+
+  if (!isFirebaseConfigured()) {
+    const records = listLocalOpenRsvps();
+    window.localStorage.setItem(localKey(), JSON.stringify([record, ...records]));
+    return record;
+  }
+
+  const { db } = getFirebaseClients();
+  const docRef = await addDoc(collection(db, "rsvps"), {
+    eventId: EVENT_ID,
+    name: record.name,
+    phone: record.phone,
+    willAttend: true,
+    people: record.people,
+    status: "confirmed",
+    totalPeople: record.totalPeople,
+    createdAt: serverTimestamp(),
+  });
+
+  return { ...record, id: docRef.id };
 }
 
 export async function deleteOpenRsvp(id: string) {
