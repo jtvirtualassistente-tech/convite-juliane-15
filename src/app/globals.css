@@ -1797,9 +1797,17 @@ section {
   background: #ffe1e6;
 }
 
+.confirmed-tools {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) minmax(190px, auto);
+  gap: 10px;
+  align-items: center;
+  width: min(560px, 100%);
+}
+
 .confirmed-search {
   position: relative;
-  min-width: min(320px, 100%);
+  min-width: 0;
 }
 
 .confirmed-search svg {
@@ -1810,14 +1818,24 @@ section {
   transform: translateY(-50%);
 }
 
-.confirmed-search input {
+.confirmed-search input,
+.confirmed-tools select {
   width: 100%;
   min-height: 42px;
-  padding: 0 12px 0 36px;
   border: 1px solid #dbe4f2;
   border-radius: 8px;
   color: #111b31;
   background: #fff;
+}
+
+.confirmed-search input {
+  padding: 0 12px 0 36px;
+}
+
+.confirmed-tools select {
+  padding: 0 12px;
+  font-size: 0.84rem;
+  font-weight: 800;
 }
 
 .confirmed-table {
@@ -1865,11 +1883,32 @@ section {
   background: #f5f3ff;
 }
 
+.confirmed-row.duplicate {
+  border-color: #fecdd3;
+  background: #fff1f2;
+}
+
+.confirmed-row.duplicate strong {
+  color: #9b2735;
+}
+
 .confirmed-row strong,
 .confirmed-row span,
 .confirmed-row em {
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.confirmed-row strong small {
+  display: inline-flex;
+  margin-left: 8px;
+  padding: 4px 7px;
+  border-radius: 999px;
+  color: #9b2735;
+  background: #ffe1e6;
+  font-size: 0.66rem;
+  font-weight: 900;
+  vertical-align: middle;
 }
 
 .confirmed-row em {
@@ -2384,8 +2423,13 @@ section {
     white-space: normal;
   }
 
+  .confirmed-tools,
   .confirmed-search {
     width: 100%;
+  }
+
+  .confirmed-tools {
+    grid-template-columns: 1fr;
   }
 
   .confirmed-row {

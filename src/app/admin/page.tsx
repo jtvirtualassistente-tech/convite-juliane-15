@@ -638,7 +638,11 @@ function getStatusLabel(status: OpenRsvpRecord["status"]) {
 }
 
 function getComparableName(name: string) {
-  return name.trim().toLowerCase();
+  return name
+    .trim()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
 }
 
 function getRsvpListedPeople(rsvp: OpenRsvpRecord) {
@@ -662,6 +666,7 @@ function getRsvpListedPeople(rsvp: OpenRsvpRecord) {
 
 function RsvpPanel({ rsvps }: { rsvps: OpenRsvpRecord[] }) {
   const [search, setSearch] = useState("");
+  const [sortMode, setSortMode] = useState<"recent" | "az" | "za">("az");
   const rows = useMemo(() => {
     return rsvps.flatMap((rsvp) => {
       const people = getRsvpListedPeople(rsvp);
@@ -682,9 +687,35 @@ function RsvpPanel({ rsvps }: { rsvps: OpenRsvpRecord[] }) {
       });
     });
   }, [rsvps]);
-  const filteredRows = rows.filter((row) =>
-    `${row.name} ${row.holder}`.toLowerCase().includes(search.toLowerCase()),
-  );
+  const duplicatedNames = useMemo(() => {
+    const counts = rows.reduce<Record<string, number>>((accumulator, row) => {
+      const comparable = getComparableName(row.name);
+      if (!comparable) return accumulator;
+      accumulator[comparable] = (accumulator[comparable] ?? 0) + 1;
+      return accumulator;
+    }, {});
+
+    return new Set(
+      Object.entries(counts)
+        .filter(([, count]) => count > 1)
+        .map(([name]) => name),
+    );
+  }, [rows]);
+  const filteredRows = rows
+    .filter((row) =>
+      `${row.name} ${row.holder}`
+        .toLowerCase()
+        .includes(search.toLowerCase()),
+    )
+    .sort((firstRow, secondRow) => {
+      if (sortMode === "recent") return 0;
+
+      const comparison = firstRow.name.localeCompare(secondRow.name, "pt-BR", {
+        sensitivity: "base",
+      });
+
+      return sortMode === "az" ? comparison : -comparison;
+    });
 
   return (
     <article className="admin-panel rsvp-panel">
@@ -693,15 +724,28 @@ function RsvpPanel({ rsvps }: { rsvps: OpenRsvpRecord[] }) {
           <h2>Lista de Presença</h2>
           <p>Uma linha para cada pessoa listada no convite.</p>
         </div>
-        <label className="confirmed-search">
-          <Search size={16} />
-          <input
-            aria-label="Filtrar nomes confirmados"
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="Filtrar por nome"
-            value={search}
-          />
-        </label>
+        <div className="confirmed-tools">
+          <label className="confirmed-search">
+            <Search size={16} />
+            <input
+              aria-label="Filtrar nomes confirmados"
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Filtrar por nome"
+              value={search}
+            />
+          </label>
+          <select
+            aria-label="Ordenar lista de presença"
+            onChange={(event) =>
+              setSortMode(event.target.value as "recent" | "az" | "za")
+            }
+            value={sortMode}
+          >
+            <option value="az">Ordem alfabética A-Z</option>
+            <option value="za">Ordem alfabética Z-A</option>
+            <option value="recent">Mais recentes</option>
+          </select>
+        </div>
       </div>
       <div className="confirmed-table">
         {filteredRows.length === 0 ? (
@@ -715,8 +759,18 @@ function RsvpPanel({ rsvps }: { rsvps: OpenRsvpRecord[] }) {
               <span>Data</span>
             </div>
             {filteredRows.map((row) => (
-              <div className={`confirmed-row ${row.status}`} key={row.id}>
-                <strong>{row.name}</strong>
+              <div
+                className={`confirmed-row ${row.status} ${
+                  duplicatedNames.has(getComparableName(row.name)) ? "duplicate" : ""
+                }`}
+                key={row.id}
+              >
+                <strong>
+                  {row.name}
+                  {duplicatedNames.has(getComparableName(row.name)) ? (
+                    <small>Duplicado</small>
+                  ) : null}
+                </strong>
                 <span>{row.holder}</span>
                 <em>{getStatusLabel(row.status)}</em>
                 <span>
