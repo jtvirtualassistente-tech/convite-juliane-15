@@ -2,7 +2,11 @@
 
 Aplicacao Next.js para convite digital, RSVP, area privada do convidado e painel administrativo.
 
+Produto digital desenvolvido e mantido pela JRT Midia Estrategica.
+
 ## Execucao local
+
+Pasta do produto: `C:\Users\julli\JRT MÍDIA ESTRATÉGICA\produtos\convite-online-juliane`.
 
 ```bash
 npm install
